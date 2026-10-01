@@ -319,6 +319,15 @@
   .log-entry .le-val{ font-family:'JetBrains Mono', monospace; color: var(--amber); }
   .log-entry .le-date{ font-family:'JetBrains Mono', monospace; font-size: 10px; color: var(--text-faint); }
   .empty{ color: var(--text-faint); font-size: 13px; text-align:center; padding: 12px 0; }
+  .subject-card{ border:1px solid var(--panel-line); border-radius:12px; padding:14px; margin:10px 0; background:rgba(127,150,180,0.04); }
+  .subject-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; font-weight:700; }
+  .subject-head-right{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .subject-delete{ border:1px solid var(--panel-line); background:transparent; color:var(--text-faint); border-radius:7px; padding:3px 7px; font-size:11px; line-height:1.2; cursor:pointer; }
+  .subject-delete:hover{ color:#ff7777; border-color:#ff7777; }
+  .subject-head label{ display:flex; align-items:center; gap:9px; min-width:0; }
+  .subject-head input{ width:18px; height:18px; flex-shrink:0; }
+  .subject-goals{ margin:8px 0; }
+  .history-open-row{ display:flex; justify-content:flex-end; margin-bottom:10px; }
 
   .footer-row{ display:flex; justify-content: space-between; align-items:center; margin-top: 6px; }
   .footer-note{ font-size: 11px; color: var(--text-faint); font-family:'JetBrains Mono', monospace; }
@@ -360,9 +369,41 @@
 
   ::-webkit-scrollbar{ height: 6px; width: 6px; }
   ::-webkit-scrollbar-thumb{ background: var(--panel-line); border-radius: 3px; }
+
+  .log-toast{position:fixed;right:20px;bottom:20px;z-index:9999;width:min(280px,calc(100vw - 40px));display:flex;flex-direction:column;gap:8px;pointer-events:none}
+  .xp-notification{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 10px 12px 14px;border:1px solid var(--panel-line);border-radius:10px;background:var(--panel);color:#ffb020;box-shadow:0 8px 28px rgba(0,0,0,.3);font-size:13px;font-weight:700;animation:xpPop .18s ease-out;pointer-events:auto}
+  .xp-notification button{border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+  @keyframes xpPop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  @keyframes schoolCheckPop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.28); }
+    100% { transform: scale(1); }
+  }
+  .school-goal-checkbox:checked,
+  .subject-complete-checkbox:checked {
+    accent-color: var(--moss);
+  }
+  .school-goal-checkbox.just-checked,
+  .subject-complete-checkbox.just-checked {
+    animation: schoolCheckPop 260ms ease-out;
+  }
+  .quest-row.just-completed {
+    animation: schoolRowFlash 420ms ease-out;
+  }
+  .subject-card.just-completed {
+    animation: schoolRowFlash 420ms ease-out;
+  }
+  @keyframes schoolRowFlash {
+    0% { background: rgba(125, 211, 160, .20); }
+    100% { background: transparent; }
+  }
+  .subject-xp-label { display:flex; align-items:center; gap:8px; color:var(--text-dim); font-size:12px; }
+
 </style>
 </head>
 <body class="theme-night">
+<div id="logToast" class="log-toast" role="status" aria-live="polite"></div>
 <div class="bg-scene">
   <div class="bg-stars"></div>
   <div class="bg-moon"></div>
@@ -506,7 +547,7 @@
   <div class="stats-grid" id="statsGrid"></div>
 
   <div class="card">
-    <div class="section-title">Workout <span class="count" id="questCount"></span></div>
+    <div class="section-title" style="justify-content:space-between;">Workout <span class="count" id="questCount"></span></div>
     <div id="questList"></div>
     <div class="add-row">
       <input type="text" id="questInput" placeholder="Add a quest (e.g. 50 push-ups)">
@@ -516,13 +557,20 @@
         <option value="speed">Speed</option>
         <option value="flex">Flexibility</option>
       </select>
+      <input type="number" id="questXP" min="0" step="1" value="15" title="XP for completing this goal" style="width:78px;" aria-label="XP for completing goal">
       <button class="btn" id="addQuestBtn">Add</button>
     </div>
+    <button class="btn ghost" id="logWorkoutBtn" style="margin-top:10px;">Log it</button>
   </div>
 
   <div class="card">
     <div class="section-title">Nutrients <span class="count" id="nutCount"></span></div>
     <div id="nutList"></div>
+    <div class="add-row" style="margin-top:10px;">
+      <input type="text" id="newNutrientInput" placeholder="Add new nutrient or supplement" aria-label="New nutrient">
+      <button class="btn" id="addNutrientBtn" type="button">Add new</button>
+    </div>
+    <button class="btn ghost" id="logNutrientsBtn" style="margin-top:8px;">Log it</button>
   </div>
 
   <div class="card">
@@ -538,6 +586,7 @@
       </div>
     </div>
     <div class="footer-note" id="sleepInfo" style="margin-top:10px;"></div>
+    <button class="btn ghost log-goal-btn" data-logitem="sleep" style="margin-top:10px;padding:6px 10px;font-size:11px;">Log it</button>
   </div>
 
   <div class="card">
@@ -545,22 +594,20 @@
     <div class="add-row">
       <input type="number" step="0.1" id="weightInput" placeholder="kg" style="width:100px;">
       <button class="btn" id="weightLogBtn">Log today's weight</button>
+      <button class="btn ghost log-goal-btn" data-logitem="weight" style="padding:6px 10px;font-size:11px;">Log it</button>
     </div>
+    <div class="footer-note" id="weightLogStatus" style="margin-top:8px;"></div>
     <div id="weightList" style="margin-top:10px;"></div>
   </div>
 
   <div class="card">
-    <div class="section-title">School Goals <span class="count" id="topicCount"></span></div>
-    <select id="subjectSelect" style="width:100%; margin-bottom:10px;"></select>
-    <div id="topicList"></div>
-    <div class="add-row">
-      <input type="text" id="topicInput" placeholder="Add a goal/topic for this subject">
-      <button class="btn" id="addTopicBtn">Add</button>
-    </div>
+    <div class="section-title" style="justify-content:space-between;">School Goals <span class="count" id="topicCount"></span></div>
+    <div id="schoolSubjects"></div>
     <div class="add-row" style="margin-top:14px; border-top:1px solid var(--panel-line); padding-top:14px;">
       <input type="text" id="subjectInput" placeholder="New subject (e.g. Maths)">
-      <button class="btn ghost" id="addSubjectBtn">Add subject</button>
+      <button class="btn ghost" id="addSubjectBtn">+ Add subject box</button>
     </div>
+    <button class="btn ghost" id="logSchoolBtn" style="width:100%;margin-top:12px;">Log it</button>
   </div>
 
   <div class="card">
@@ -569,10 +616,18 @@
       <input type="text" id="logExercise" placeholder="Exercise" style="flex:1.4">
       <input type="number" id="logValue" placeholder="Value" style="width:80px">
       <input type="text" id="logUnit" placeholder="unit" style="width:70px">
-      <button class="btn" id="addLogBtn">Log it</button>
+      <button class="btn ghost" id="addLogBtn">Log it</button>
     </div>
     <div id="logList" style="margin-top:10px;"></div>
   </div>
+
+  <div class="card" id="dailyLogCard">
+    <div class="section-title">Daily Goal Log</div>
+    <div class="footer-note" style="margin-bottom:12px;">Log every goal and category for today. Completed entries earn XP; incomplete or empty entries earn 0 XP.</div>
+    <button class="btn" id="logTodayGoalsBtn" style="width:100%;">Log today's goals</button>
+    <div id="dailyLogStatus" class="footer-note" style="margin-top:10px;"></div>
+  </div>
+  <div class="history-open-row"><button class="btn ghost" id="openHistoryBtn">View log history ↗</button></div>
 
   <div class="footer-row">
     <span class="footer-note" id="startNote"></span>
@@ -588,6 +643,16 @@
     </div>
     <div class="progress-summary" id="progressSummary"></div>
     <div id="dotGrid"></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="historyModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="section-title">Log History</div>
+      <button class="btn ghost" id="closeHistoryBtn">Close</button>
+    </div>
+    <div id="goalHistoryList"><div class="empty">No daily goals logged yet.</div></div>
   </div>
 </div>
 
@@ -651,6 +716,12 @@ const NUTRIENTS = {
   vitc: 'Vitamin C',
   magnesium: 'Magnesium'
 };
+function getNutrientDefinitions(){
+  const custom = {};
+  (state?.customNutrients || []).forEach(item => { custom[item.id] = item.name; });
+  return {...NUTRIENTS, ...custom};
+}
+
 function arcEndDate(){
   const d = new Date(ARC_START);
   d.setDate(d.getDate() + ARC_TOTAL_DAYS - 1);
@@ -672,10 +743,9 @@ function defaultState(){
       {id: 'q3', text: '10 min stretch', cat: 'flex', xp: 10}
     ],
     dailyLogs: {},
-    subjects: [
-      {id: 'physics', name: 'Physics', topics: []},
-      {id: 'english', name: 'English', topics: []}
-    ],
+    goalHistory: {},
+    customNutrients: [],
+    subjects: [],
     logs: []
   };
 }
@@ -683,6 +753,7 @@ function defaultState(){
 function emptyDayLog(){
   return {
     quests: [],
+    schoolGoals: [],
     nutrients: {protein:false, creatine:false, b12:false, vitc:false, magnesium:false},
     sleep: {bed:'', wake:''},
     weight: null
@@ -693,6 +764,7 @@ function getDayLog(dateStr){
   if(!state.dailyLogs[dateStr]) state.dailyLogs[dateStr] = emptyDayLog();
   const dl = state.dailyLogs[dateStr];
   if(!dl.quests) dl.quests = [];
+  if(!dl.schoolGoals) dl.schoolGoals = [];
   if(!dl.nutrients) dl.nutrients = {protein:false, creatine:false, b12:false, vitc:false, magnesium:false};
   if(!dl.sleep) dl.sleep = {bed:'', wake:''};
   if(dl.weight === undefined) dl.weight = null;
@@ -701,10 +773,11 @@ function getDayLog(dateStr){
 
 function migrateState(){
   if(!state.dailyLogs) state.dailyLogs = {};
-  if(!state.subjects) state.subjects = [
-    {id: 'physics', name: 'Physics', topics: []},
-    {id: 'english', name: 'English', topics: []}
-  ];
+  if(!state.goalHistory) state.goalHistory = {};
+  if(!Array.isArray(state.customNutrients)) state.customNutrients = [];
+  if(!state.subjects) state.subjects = [];
+  // Remove the old empty default subject boxes; keep them if the user added goals to them.
+  state.subjects = state.subjects.filter(subject => !(['physics','english'].includes(String(subject.name || '').toLowerCase()) && (!Array.isArray(subject.topics) || subject.topics.length === 0)));
   // migrate the old single-day "completedToday" quest tracking into dailyLogs
   if(Array.isArray(state.completedToday) && state.completedToday.length){
     const dl = getDayLog(todayStr());
@@ -882,15 +955,18 @@ function render(){
   // Nutrients
   const nutList = document.getElementById('nutList');
   nutList.innerHTML = '';
-  const nutDone = Object.keys(NUTRIENTS).filter(k => todayLog.nutrients[k]).length;
-  document.getElementById('nutCount').textContent = nutDone + ' / ' + Object.keys(NUTRIENTS).length + ' done';
-  Object.keys(NUTRIENTS).forEach(key => {
+  const nutrientDefinitions = getNutrientDefinitions();
+  const nutDone = Object.keys(nutrientDefinitions).filter(k => todayLog.nutrients[k]).length;
+  document.getElementById('nutCount').textContent = nutDone + ' / ' + Object.keys(nutrientDefinitions).length + ' done';
+  Object.keys(nutrientDefinitions).forEach(key => {
     const done = todayLog.nutrients[key];
     const row = document.createElement('div');
     row.className = 'quest-row';
     row.innerHTML = `
       <div class="quest-check ${done ? 'checked' : ''}" data-nut="${key}">${done ? '✓' : ''}</div>
-      <div class="quest-text ${done ? 'checked' : ''}">${NUTRIENTS[key]}</div>
+      <div class="quest-text ${done ? 'checked' : ''}">${escapeHtml(nutrientDefinitions[key])}</div>
+      <div class="quest-xp">+5xp</div>
+      <button class="quest-del" type="button" data-clearnut="${key}" aria-label="Clear ${escapeHtml(nutrientDefinitions[key])} for today" title="Clear today's entry">×</button>
     `;
     nutList.appendChild(row);
   });
@@ -907,6 +983,9 @@ function render(){
 
   // Weight
   document.getElementById('weightInput').value = (todayLog.weight !== null && todayLog.weight !== undefined) ? todayLog.weight : '';
+  document.getElementById('weightLogStatus').textContent = todayLog.weightLogEmpty
+    ? 'Logged without a value: 0 XP. Included in Log History.'
+    : '';
   const weightList = document.getElementById('weightList');
   const weightDates = Object.keys(state.dailyLogs)
     .filter(d => state.dailyLogs[d].weight !== null && state.dailyLogs[d].weight !== undefined)
@@ -935,12 +1014,17 @@ function render(){
       const row = document.createElement('div');
       row.className = 'log-entry';
       row.innerHTML = `
-        <div class="le-main"><span>${escapeHtml(l.exercise)}</span><span class="le-val">${l.value}${escapeHtml(l.unit||'')}</span></div>
+        <div class="le-main"><span>${escapeHtml(l.exercise)}</span><span class="le-val">${l.noValue || l.value === '' ? '0 XP · No value' : escapeHtml(String(l.value)) + escapeHtml(l.unit||'')}</span></div>
         <span class="le-date">${l.date}</span>
       `;
       logList.appendChild(row);
     });
   }
+  renderGoalHistory();
+  const loggedToday = !!state.goalHistory[todayStr()];
+  document.getElementById('dailyLogStatus').textContent = loggedToday
+    ? 'Today is logged. You can update it until the day ends.'
+    : 'Not logged yet.';
 }
 
 function escapeHtml(s){
@@ -949,39 +1033,107 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
-let selectedSubjectId = null;
-
 function renderSchool(){
-  const sel = document.getElementById('subjectSelect');
-  if(state.subjects.length === 0){
-    sel.innerHTML = '<option value="">No subjects yet</option>';
-    document.getElementById('topicList').innerHTML = '<div class="empty">Add a subject below to start tracking goals.</div>';
-    document.getElementById('topicCount').textContent = '';
+  const root = document.getElementById('schoolSubjects');
+  root.innerHTML = '';
+  const dl = getDayLog(todayStr());
+  const totalGoals = state.subjects.reduce((sum, subject) => sum + subject.topics.length, 0);
+  const doneGoals = state.subjects.reduce((sum, subject) => sum + subject.topics.filter(t => dl.schoolGoals.includes(t.id)).length, 0);
+  document.getElementById('topicCount').textContent = doneGoals + ' / ' + totalGoals + ' goals done';
+  if(!state.subjects.length){
+    root.innerHTML = '<div class="empty">No subjects yet — add your first subject box below.</div>';
     return;
   }
-  const wanted = selectedSubjectId && state.subjects.find(s => s.id === selectedSubjectId) ? selectedSubjectId : state.subjects[0].id;
-  selectedSubjectId = wanted;
-  sel.innerHTML = state.subjects.map(s => `<option value="${s.id}" ${s.id===wanted?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
+  state.subjects.forEach(subject => {
+    const allDone = subject.topics.length > 0 && subject.topics.every(t => dl.schoolGoals.includes(t.id));
+    if(subject.xp === undefined) subject.xp = 10;
+    const card = document.createElement('div');
+    card.className = 'subject-card';
+    card.innerHTML = `
+      <div class="subject-head">
+        <label><input type="checkbox" class="subject-complete-checkbox" data-subject="${subject.id}" ${allDone ? 'checked' : ''} ${subject.topics.length ? '' : 'disabled title="Add a sub-goal before completing this subject"'}><span>${escapeHtml(subject.name)}</span></label>
+        <div class="subject-head-right">
+          <span class="count">${subject.topics.filter(t => dl.schoolGoals.includes(t.id)).length}/${subject.topics.length}</span><span class="quest-xp">+${Math.max(0, Number(subject.xp)||0)}xp subject</span>
+          <button type="button" class="subject-delete" data-delsubject="${subject.id}" aria-label="Delete ${escapeHtml(subject.name)} subject" title="Delete subject">Delete</button>
+        </div>
+      </div>
+      <div class="subject-goals" id="goals-${subject.id}"></div>
+      <div class="add-row subject-xp-row">
+        <label class="subject-xp-label">Subject completion XP <input type="number" class="subject-xp-input" data-subject="${subject.id}" min="0" step="1" value="${Math.max(0, Number(subject.xp)||0)}" style="width:72px;" aria-label="XP for completing subject"></label>
+        <input type="text" class="new-school-goal" data-subject="${subject.id}" placeholder="Add a goal for ${escapeHtml(subject.name)}" aria-label="New goal for ${escapeHtml(subject.name)}">
+        <input type="number" class="new-school-xp" data-subject="${subject.id}" min="0" step="1" value="10" title="XP for completing this school goal" style="width:72px;" aria-label="XP for school goal">
+        <button class="btn ghost add-school-goal-btn" data-subject="${subject.id}">Add goal</button>
+      </div>`;
+    // Bind subject controls directly when the card is rendered, so they remain
+    // reliable even though the school-goals UI is rebuilt on every render.
+    const subjectXpInput = card.querySelector('.subject-xp-input');
+    subjectXpInput.addEventListener('change', async () => {
+      subject.xp = Math.max(0, parseInt(subjectXpInput.value, 10) || 0);
+      await saveState();
+      render();
+    });
+    const subjectCheckbox = card.querySelector('.subject-complete-checkbox');
+    subjectCheckbox.addEventListener('change', async () => {
+      if(!subject.topics.length){
+        subjectCheckbox.checked = false;
+        subjectCheckbox.disabled = true;
+        return;
+      }
+      if(subjectCheckbox.checked){
+        subjectCheckbox.classList.remove('just-checked');
+        void subjectCheckbox.offsetWidth;
+        subjectCheckbox.classList.add('just-checked');
+        card.classList.remove('just-completed');
+        void card.offsetWidth;
+        card.classList.add('just-completed');
+      }
+      subjectCheckbox.disabled = true;
+      try {
+        await toggleSubject(subject.id, subjectCheckbox.checked);
+      } catch (error) {
+        console.error('Could not update subject completion:', error);
+        subjectCheckbox.checked = !subjectCheckbox.checked;
+        showLogToast('Could not save subject · 0 XP');
+      } finally {
+        subjectCheckbox.disabled = !subject.topics.length;
+      }
+    });
+    card.querySelector('[data-delsubject]').addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      deleteSubject(subject.id);
+    });
 
-  const subject = state.subjects.find(s => s.id === selectedSubjectId);
-  const topicList = document.getElementById('topicList');
-  topicList.innerHTML = '';
-  const doneCt = subject.topics.filter(t => t.done).length;
-  document.getElementById('topicCount').textContent = doneCt + ' / ' + subject.topics.length + ' done';
-  if(subject.topics.length === 0){
-    topicList.innerHTML = '<div class="empty">No goals yet — add one below.</div>';
-  } else {
+    const goals = card.querySelector('.subject-goals');
+    if(!subject.topics.length) goals.innerHTML = '<div class="empty">No goals in this subject yet.</div>';
     subject.topics.forEach(t => {
+      const done = dl.schoolGoals.includes(t.id);
       const row = document.createElement('div');
       row.className = 'quest-row';
       row.innerHTML = `
-        <div class="quest-check ${t.done ? 'checked' : ''}" data-topic="${t.id}">${t.done ? '✓' : ''}</div>
-        <div class="quest-text ${t.done ? 'checked' : ''}">${escapeHtml(t.text)}</div>
-        <button class="quest-del" data-deltopic="${t.id}">✕</button>
-      `;
-      topicList.appendChild(row);
+        <input type="checkbox" class="school-goal-checkbox" data-topic="${t.id}" ${done ? 'checked' : ''} aria-label="Complete ${escapeHtml(t.text)}" style="width:18px;height:18px;flex-shrink:0;">
+        <div class="quest-text ${done ? 'checked' : ''}">${escapeHtml(t.text)} <span class="quest-xp">+${Number(t.xp ?? 10)}xp</span></div>
+        <button class="quest-del" data-deltopic="${t.id}" aria-label="Delete goal">✕</button>`;
+      const goalCheckbox = row.querySelector('.school-goal-checkbox');
+      goalCheckbox.addEventListener('change', () => {
+        if(goalCheckbox.checked){
+          goalCheckbox.classList.remove('just-checked');
+          row.classList.remove('just-completed');
+          void goalCheckbox.offsetWidth;
+          goalCheckbox.classList.add('just-checked');
+          row.classList.add('just-completed');
+        }
+        toggleTopic(t.id);
+      });
+      row.querySelector('[data-deltopic]').addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteTopic(t.id);
+      });
+      goals.appendChild(row);
     });
-  }
+    root.appendChild(card);
+  });
 }
 
 function renderProgressModal(){
@@ -990,28 +1142,19 @@ function renderProgressModal(){
   const today = todayStr();
   let filled = 0, past = 0;
   let d = new Date(ARC_START + 'T00:00:00');
-  ARC_MONTHS.forEach(m => {
-    const monthRow = document.createElement('div');
-    monthRow.className = 'month-row';
-    const label = document.createElement('div');
-    label.className = 'month-label';
-    label.textContent = m.label;
-    const daysWrap = document.createElement('div');
-    daysWrap.className = 'dot-days';
-    for(let i = 0; i < m.days; i++){
-      const ds = d.toISOString().slice(0,10);
-      const ok = dayIsSuccessful(ds);
-      if(ds <= today){ past++; if(ok) filled++; }
-      const dot = document.createElement('div');
-      dot.className = 'day-dot' + (ok ? ' filled' : '') + (ds === today ? ' today' : '');
-      dot.title = ds;
-      daysWrap.appendChild(dot);
-      d.setDate(d.getDate() + 1);
-    }
-    monthRow.appendChild(label);
-    monthRow.appendChild(daysWrap);
-    grid.appendChild(monthRow);
-  });
+  const daysWrap = document.createElement('div');
+  daysWrap.className = 'dot-days';
+  for(let i = 0; i < ARC_TOTAL_DAYS; i++){
+    const ds = d.toISOString().slice(0,10);
+    const ok = dayIsSuccessful(ds);
+    if(ds <= today){ past++; if(ok) filled++; }
+    const dot = document.createElement('div');
+    dot.className = 'day-dot' + (ok ? ' filled' : '') + (ds === today ? ' today' : '');
+    dot.title = ds;
+    daysWrap.appendChild(dot);
+    d.setDate(d.getDate() + 1);
+  }
+  grid.appendChild(daysWrap);
   document.getElementById('progressSummary').textContent = filled + ' / ' + ARC_TOTAL_DAYS + ' days complete · ' + computeStreak() + ' day streak';
 }
 
@@ -1020,17 +1163,11 @@ async function toggleQuest(id){
   if(!q) return;
   const dl = getDayLog(todayStr());
   const idx = dl.quests.indexOf(id);
-  if(idx >= 0){
-    dl.quests.splice(idx, 1);
-    state.totalXP = Math.max(0, state.totalXP - q.xp);
-    state.stats[q.cat] = Math.max(0, (state.stats[q.cat]||0) - q.xp);
-  } else {
-    dl.quests.push(id);
-    state.totalXP += q.xp;
-    state.stats[q.cat] = (state.stats[q.cat]||0) + q.xp;
-  }
-  await saveState();
-  render();
+  if(idx >= 0) dl.quests.splice(idx, 1);
+  else dl.quests.push(id);
+  const item = collectDailyGoals().find(x => x.id === 'quest:' + id);
+  if(item) await saveDailySnapshot([item]); else { await saveState(); render(); }
+  showLogToast((idx >= 0 ? 'Goal unchecked' : 'Goal completed') + ' · ' + (idx >= 0 ? 0 : Math.max(0, Number(q.xp)||0)) + ' XP');
 }
 
 async function deleteQuest(id){
@@ -1046,7 +1183,24 @@ async function addQuest(){
   const cat = document.getElementById('questCategory').value;
   const text = input.value.trim();
   if(!text) return;
-  state.questTemplates.push({id: 'q'+Date.now(), text, cat, xp: 15});
+  const xp = Math.max(0, parseInt(document.getElementById('questXP').value, 10) || 0);
+  state.questTemplates.push({id: 'q'+Date.now(), text, cat, xp});
+  input.value = '';
+  document.getElementById('questXP').value = '15';
+  await saveState();
+  render();
+}
+
+async function addNutrient(){
+  const input = document.getElementById('newNutrientInput');
+  const name = input.value.trim();
+  if(!name) { input.focus(); return; }
+  const exists = Object.values(getNutrientDefinitions()).some(value => value.toLowerCase() === name.toLowerCase());
+  if(exists){ alert('That nutrient is already on the list.'); input.focus(); return; }
+  const id = 'custom_' + Date.now();
+  if(!Array.isArray(state.customNutrients)) state.customNutrients = [];
+  state.customNutrients.push({id, name});
+  getDayLog(todayStr()).nutrients[id] = false;
   input.value = '';
   await saveState();
   render();
@@ -1055,8 +1209,10 @@ async function addQuest(){
 async function toggleNutrient(key){
   const dl = getDayLog(todayStr());
   dl.nutrients[key] = !dl.nutrients[key];
-  await saveState();
-  render();
+  const done = !!dl.nutrients[key];
+  const item = collectDailyGoals().find(x => x.id === 'nutrient:' + key);
+  if(item) await saveDailySnapshot([item]); else { await saveState(); render(); }
+  showLogToast((done ? 'Nutrient logged' : 'Nutrient unchecked') + ' · ' + (done ? 5 : 0) + ' XP');
 }
 
 async function saveSleep(){
@@ -1069,12 +1225,17 @@ async function saveSleep(){
 
 async function logWeight(){
   const input = document.getElementById('weightInput');
-  const val = parseFloat(input.value);
-  if(isNaN(val)) return;
   const dl = getDayLog(todayStr());
-  dl.weight = val;
-  await saveState();
-  render();
+  const raw = input.value.trim();
+  const val = raw === '' ? NaN : parseFloat(raw);
+  if(raw === '' || !Number.isFinite(val)){
+    dl.weightLogEmpty = true;
+  } else {
+    dl.weight = val;
+    dl.weightLogEmpty = false;
+  }
+  await saveDailySnapshot([collectDailyGoals().find(item => item.id === 'weight')]);
+  showLogToast(raw === '' || !Number.isFinite(val) ? 'Weight logged · No value entered · 0 XP' : 'Weight logged · ' + val + ' kg · 5 XP');
 }
 
 async function addSubject(){
@@ -1082,68 +1243,331 @@ async function addSubject(){
   const name = input.value.trim();
   if(!name) return;
   const id = 's' + Date.now();
-  state.subjects.push({id, name, topics: []});
-  selectedSubjectId = id;
+  state.subjects.push({id, name, xp: 10, topics: []});
   input.value = '';
   await saveState();
   render();
 }
 
-async function addTopic(){
-  const input = document.getElementById('topicInput');
-  const text = input.value.trim();
-  if(!text || !selectedSubjectId) return;
-  const subject = state.subjects.find(s => s.id === selectedSubjectId);
+async function deleteSubject(subjectId){
+  const subject = state.subjects.find(s => s.id === subjectId);
   if(!subject) return;
-  subject.topics.push({id: 't' + Date.now(), text, done: false});
+  // Delete immediately: native confirm dialogs can be suppressed in some
+  // hosted/embedded browsers, making the button appear unresponsive.
+  state.subjects = state.subjects.filter(s => s.id !== subjectId);
+  await saveState();
+  render();
+}
+
+async function addTopic(subjectId, input, xpInput){
+  const text = input.value.trim();
+  if(!text || !subjectId) return;
+  const subject = state.subjects.find(s => s.id === subjectId);
+  if(!subject) return;
+  const xp = Math.max(0, parseInt(xpInput.value, 10) || 0);
+  subject.topics.push({id: 't'+Date.now()+Math.random().toString(16).slice(2,6), text, done: false, xp});
   input.value = '';
+  xpInput.value = '10';
   await saveState();
   render();
 }
 
 async function toggleTopic(topicId){
-  const subject = state.subjects.find(s => s.id === selectedSubjectId);
+  const subject = state.subjects.find(s => s.topics.some(x => x.id === topicId));
   if(!subject) return;
   const t = subject.topics.find(x => x.id === topicId);
   if(!t) return;
-  t.done = !t.done;
-  await saveState();
-  render();
+  const dl = getDayLog(todayStr());
+  const wasDone = dl.schoolGoals.includes(topicId);
+  if(wasDone) dl.schoolGoals = dl.schoolGoals.filter(id => id !== topicId);
+  else dl.schoolGoals.push(topicId);
+  const item = collectDailyGoals().find(x => x.id === 'school:' + subject.id + ':' + topicId);
+  if(item) await saveDailySnapshot([item]); else { await saveState(); render(); }
+  showLogToast((wasDone ? 'School goal unchecked' : 'School goal completed') + ' · ' + (wasDone ? 0 : Math.max(0, Number(t.xp ?? 10)||0)) + ' XP');
 }
 
 async function deleteTopic(topicId){
-  const subject = state.subjects.find(s => s.id === selectedSubjectId);
+  const subject = state.subjects.find(s => s.topics.some(x => x.id === topicId));
   if(!subject) return;
   subject.topics = subject.topics.filter(x => x.id !== topicId);
   await saveState();
   render();
 }
 
+function showLogToast(message){
+  const stack = document.getElementById('logToast');
+  if(!stack) return;
+  const match = String(message).match(/(?:·|\s)(-?\d+)\s*XP/i);
+  const amount = match ? Math.max(0, Number(match[1])) : 0;
+  if(amount <= 0) return;
+  const notification = document.createElement('div');
+  notification.className = 'xp-notification';
+  const label = document.createElement('span');
+  label.textContent = '+' + amount + ' XP';
+  const close = document.createElement('button');
+  close.type = 'button'; close.setAttribute('aria-label', 'Dismiss XP notification'); close.textContent = '×';
+  close.addEventListener('click', () => notification.remove());
+  notification.append(label, close);
+  stack.appendChild(notification);
+  while(stack.children.length > 5) stack.firstElementChild.remove();
+  setTimeout(() => notification.remove(), 4000);
+}
+
 async function addLog(){
   const ex = document.getElementById('logExercise');
   const val = document.getElementById('logValue');
   const unit = document.getElementById('logUnit');
-  if(!ex.value.trim() || !val.value) return;
-  state.logs.push({
-    exercise: ex.value.trim(),
-    value: val.value,
+  const hasValue = val.value.trim() !== '';
+  const hasAnyInput = ex.value.trim() !== '' || hasValue || unit.value.trim() !== '';
+  const logEntry = {
+    exercise: ex.value.trim() || (hasAnyInput ? 'Training log' : 'Training log (no values entered)'),
+    value: hasValue ? val.value : '',
     unit: unit.value.trim(),
+    noValue: !hasValue,
     date: todayStr()
-  });
+  };
+  state.logs.push(logEntry);
   ex.value = ''; val.value=''; unit.value='';
+  await saveDailySnapshot(collectDailyGoals().filter(item => item.id === 'training-log:' + logEntry.date + ':' + (state.logs.length - 1)));
+  showLogToast(hasValue ? 'Training Log saved · 5 XP' : 'Training Log saved · No value entered · 0 XP');
+}
+
+function collectDailyGoals(){
+  const date = todayStr();
+  const dl = getDayLog(date);
+  const items = [];
+  state.questTemplates.forEach(q => items.push({id:'quest:'+q.id, name:q.text, category:CATS[q.cat]?.label || q.cat, done:dl.quests.includes(q.id), xp:Math.max(0, Number(q.xp)||0)}));
+  state.subjects.forEach(subject => subject.topics.forEach(t => items.push({id:'school:'+subject.id+':'+t.id, name:t.text, category:'School · '+subject.name, done:dl.schoolGoals.includes(t.id), xp:Math.max(0, Number(t.xp ?? 10)||0)})));
+  const nutrientDefinitions = getNutrientDefinitions();
+  Object.keys(nutrientDefinitions).forEach(key => items.push({id:'nutrient:'+key, name:nutrientDefinitions[key], category:'Nutrients', done:!!dl.nutrients[key], xp:5}));
+  items.push({id:'sleep', name:'Sleep schedule', category:'Sleep', done:!!(dl.sleep.bed && dl.sleep.wake), detail:dl.sleep.bed && dl.sleep.wake ? dl.sleep.bed+'–'+dl.sleep.wake : 'Not logged', xp:5});
+  items.push({id:'weight', name:'Weight', category:'Weight', done:dl.weight !== null && dl.weight !== undefined, detail:dl.weight !== null && dl.weight !== undefined ? dl.weight+' kg' : (dl.weightLogEmpty ? 'No value entered' : 'Not logged'), xp:5});
+  const todaysTrainingLogs = state.logs
+    .map((log, index) => ({log, index}))
+    .filter(item => item.log.date === date);
+  if(todaysTrainingLogs.length){
+    todaysTrainingLogs.forEach(({log, index}) => {
+      const hasValue = log.value !== '' && log.value !== undefined && log.value !== null;
+      items.push({
+        id:'training-log:'+date+':'+index,
+        name:log.exercise || 'Training log', category:'Training Log',
+        done:hasValue,
+        detail:hasValue ? String(log.value) + (log.unit ? ' ' + log.unit : '') : 'No value entered',
+        xp:5
+      });
+    });
+  } else {
+    items.push({id:'training-log:empty', name:'Training log', category:'Training Log', done:false, detail:'No values entered', xp:5});
+  }
+  return items;
+}
+
+async function logGoalById(id){
+  const item = collectDailyGoals().find(x => x.id === id);
+  if(!item) return;
+  await saveDailySnapshot([item]);
+}
+
+function upsertHistoryEntry(item){
+  const date = todayStr();
+  if(!state.goalHistory) state.goalHistory = {};
+  const log = state.goalHistory[date] || {date, entries: [], updatedAt:new Date().toISOString()};
+  if(!Array.isArray(log.entries)) log.entries = [];
+  const index = log.entries.findIndex(entry => entry.id === item.id);
+  if(index >= 0) log.entries[index] = {...log.entries[index], ...item};
+  else log.entries.push(item);
+  log.updatedAt = new Date().toISOString();
+  state.goalHistory[date] = log;
+}
+
+async function saveDailySnapshot(items){
+  const date = todayStr();
+  const previous = state.goalHistory[date];
+  const entries = previous && Array.isArray(previous.entries) ? previous.entries.slice() : [];
+  if(items.some(item => String(item.id || '').startsWith('training-log:') && item.id !== 'training-log:empty')){
+    const placeholderIndex = entries.findIndex(entry => entry.id === 'training-log:empty');
+    if(placeholderIndex >= 0) entries.splice(placeholderIndex, 1);
+  }
+  let earnedDelta = 0;
+  items.forEach(item => {
+    const existingIndex = entries.findIndex(e => e.id === item.id);
+    const old = existingIndex >= 0 ? entries[existingIndex] : null;
+    const next = {...item, xpEarned: item.done ? item.xp : 0};
+    earnedDelta += next.xpEarned - (old ? Number(old.xpEarned)||0 : 0);
+    if(existingIndex >= 0) entries[existingIndex] = next;
+    else entries.push(next);
+  });
+  state.totalXP = Math.max(0, state.totalXP + earnedDelta);
+  // Category XP follows workout category for workout goals; school goals are tracked in total XP.
+  items.forEach(item => {
+    if(!item.id.startsWith('quest:')) return;
+    const qid = item.id.slice(6);
+    const q = state.questTemplates.find(x => x.id === qid);
+    if(q) state.stats[q.cat] = Math.max(0, (state.stats[q.cat]||0) + ((item.done ? item.xp : 0) - ((previous?.entries || []).find(e => e.id === item.id)?.xpEarned || 0)));
+  });
+  state.goalHistory[date] = {date, entries, updatedAt:new Date().toISOString()};
   await saveState();
   render();
+}
+
+async function logTodaysGoals(){
+  await saveDailySnapshot(collectDailyGoals());
+}
+
+async function logCategory(category){
+  const items = collectDailyGoals().filter(item => {
+    if(category === 'Workout') return item.id.startsWith('quest:');
+    if(category === 'Nutrients') return item.id.startsWith('nutrient:');
+    if(category === 'School') return item.id.startsWith('school:');
+    return false;
+  });
+  await saveDailySnapshot(items);
+  const messages = {Workout:'Workout goals logged', Nutrients:'Nutrients logged', School:'School goals logged'};
+  showLogToast((messages[category] || category + ' logged') + ' · ' + items.reduce((sum, item) => sum + (item.done ? Number(item.xp)||0 : 0), 0) + ' XP');
+}
+
+async function toggleSubject(subjectId, checked){
+  const subject = state.subjects.find(s => s.id === subjectId);
+  if(!subject || !subject.topics.length) return;
+
+  const dl = getDayLog(todayStr());
+  const topicIds = subject.topics.map(topic => topic.id);
+  if(checked){
+    dl.schoolGoals = [...new Set([...dl.schoolGoals, ...topicIds])];
+  } else {
+    dl.schoolGoals = dl.schoolGoals.filter(id => !topicIds.includes(id));
+  }
+
+  // Record every sub-goal and the subject-completion reward in the same
+  // daily snapshot so the checkbox updates visible state, total XP and history.
+  const items = subject.topics.map(topic => ({
+    id: 'school:' + subject.id + ':' + topic.id,
+    name: topic.text,
+    category: 'School · ' + subject.name,
+    done: checked,
+    xp: Math.max(0, Number(topic.xp ?? 10) || 0)
+  }));
+  items.push({
+    id: 'school-subject:' + subject.id,
+    name: subject.name + ' (subject completion)',
+    category: 'School · ' + subject.name,
+    done: checked,
+    xp: Math.max(0, Number(subject.xp ?? 10) || 0)
+  });
+
+  await saveDailySnapshot(items);
+  const subjectXp = Math.max(0, Number(subject.xp ?? 10) || 0);
+  if(checked && subjectXp > 0) showLogToast('Subject completed · ' + subject.name + ' · +' + subjectXp + ' XP');
+}
+
+function renderGoalHistory(){
+  const root = document.getElementById('goalHistoryList');
+  if(!root) return;
+  root.innerHTML = '';
+  const dates = Object.keys(state.goalHistory || {}).sort().reverse();
+  if(!dates.length){ root.innerHTML = '<div class="empty">No daily goals logged yet.</div>'; return; }
+  dates.forEach(date => {
+    const log = state.goalHistory[date];
+    const wrap = document.createElement('details');
+    // Keep today's entry expanded so its category logs are immediately visible.
+    // Older entries stay collapsed to keep the history compact.
+    wrap.open = date === todayStr();
+    wrap.style.cssText = 'border-bottom:1px solid var(--panel-line);padding:9px 0;';
+    const total = (log.entries || []).reduce((sum,e) => sum + (Number(e.xpEarned)||0), 0);
+    const summary = document.createElement('summary');
+    summary.style.cssText = 'cursor:pointer;display:flex;justify-content:space-between;gap:12px;font-size:13px;';
+    summary.innerHTML = `<span>${date}${date === todayStr() ? ' · Today' : ' · Locked'}</span><span class="quest-xp">+${total} XP</span>`;
+    wrap.appendChild(summary);
+    const entries = log.entries || [];
+    const categoryGroups = [
+      {label:'Workout', matches:e => String(e.id || '').startsWith('quest:')},
+      {label:'Nutrients', matches:e => String(e.id || '').startsWith('nutrient:')},
+      {label:'School', matches:e => String(e.id || '').startsWith('school:') || String(e.id || '').startsWith('school-subject:')},
+      {label:'Sleep', matches:e => e.category === 'Sleep' || e.id === 'sleep'},
+      {label:'Weight', matches:e => e.category === 'Weight' || e.id === 'weight'},
+      {label:'Training Log', matches:e => e.category === 'Training Log' || String(e.id || '').startsWith('training-log:')}
+    ];
+    categoryGroups.forEach(group => {
+      const groupEntries = entries.filter(group.matches);
+      const heading = document.createElement('div');
+      heading.className = 'footer-note';
+      heading.style.cssText = 'margin:12px 0 5px;font-weight:700;';
+      heading.textContent = group.label;
+      wrap.appendChild(heading);
+      if(groupEntries.length){
+        groupEntries.forEach(entry => {
+          const row = document.createElement('div');
+          row.className = 'log-entry';
+          const detail = entry.detail || (entry.value !== undefined && entry.value !== '' ? String(entry.value) + (entry.unit || '') : '');
+          const xpText = `${Number(entry.xpEarned)||0} XP`;
+          row.innerHTML = `<div class="le-main"><span>${entry.done ? '✓' : '○'} ${escapeHtml(entry.name)}</span><span class="le-date">${escapeHtml(entry.category || '')}</span></div>${detail ? `<div class="footer-note" style="margin:3px 0 5px 22px;">Value: ${escapeHtml(String(detail))}</div>` : ''}<span class="le-val">${xpText}</span>`;
+          wrap.appendChild(row);
+        });
+      } else {
+        const emptyRow = document.createElement('div');
+        emptyRow.className = 'empty';
+        emptyRow.textContent = 'Nothing logged in this category · 0 XP';
+        wrap.appendChild(emptyRow);
+      }
+    });
+    // Any future/other log categories are also shown below the standard categories.
+    entries.filter(entry => !categoryGroups.some(group => group.matches(entry))).forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'log-entry';
+      const detail = entry.detail || (entry.value !== undefined && entry.value !== '' ? String(entry.value) + (entry.unit || '') : '');
+      const xpText = entry.xpEarned !== undefined ? `${Number(entry.xpEarned)||0} XP` : '';
+      row.innerHTML = `<div class="le-main"><span>${entry.done ? '✓' : '○'} ${escapeHtml(entry.name)}</span><span class="le-date">${escapeHtml(entry.category || '')}</span></div>${detail ? `<div class="footer-note" style="margin:3px 0 5px 22px;">Value: ${escapeHtml(String(detail))}</div>` : ''}${xpText ? `<span class="le-val">${xpText}</span>` : ''}`;
+      wrap.appendChild(row);
+    });
+    if(date === todayStr()){
+      const note = document.createElement('div');
+      note.className = 'footer-note';
+      note.style.marginTop = '6px';
+      note.textContent = 'Editable until midnight; logging again updates this entry.';
+      wrap.appendChild(note);
+    }
+    root.appendChild(wrap);
+  });
 }
 
 async function resetAll(){
   if(!confirm('This will erase all training progress. Are you sure?')) return;
   state = defaultState();
-  selectedSubjectId = null;
   await saveState();
   render();
 }
 
+document.addEventListener('change', e => {
+  const schoolCheck = e.target.closest('.school-goal-checkbox');
+  if(schoolCheck){ toggleTopic(schoolCheck.dataset.topic); }
+});
 document.addEventListener('click', (e) => {
+  const logItem = e.target.closest('[data-logitem]');
+  if(logItem){
+    const id = logItem.dataset.logitem;
+    if(id === 'sleep') {
+      const bed = document.getElementById('sleepBed').value;
+      const wake = document.getElementById('sleepWake').value;
+      logGoalById(id).then(() => showLogToast(bed && wake ? 'Sleep logged · ' + bed + '–' + wake + ' · 5 XP' : 'Sleep logged · Incomplete times · 0 XP'));
+    } else if(id === 'weight') {
+      logWeight();
+    } else { logGoalById(id); }
+    return;
+  }
+  const addSchoolGoal = e.target.closest('.add-school-goal-btn');
+  if(addSchoolGoal){ const id = addSchoolGoal.dataset.subject; addTopic(id, document.querySelector('.new-school-goal[data-subject="'+id+'"]'), document.querySelector('.new-school-xp[data-subject="'+id+'"]')); return; }
+  const clearNut = e.target.closest('[data-clearnut]');
+  if(clearNut){
+    const key = clearNut.dataset.clearnut;
+    const dl = getDayLog(todayStr());
+    const wasDone = !!dl.nutrients[key];
+    dl.nutrients[key] = false;
+    saveState().then(() => {
+      render();
+      if(wasDone) showLogToast('Nutrient unchecked · 0 XP');
+    });
+    return;
+  }
   const check = e.target.closest('.quest-check');
   if(check){
     if(check.dataset.id){ toggleQuest(check.dataset.id); return; }
@@ -1157,6 +1581,7 @@ document.addEventListener('click', (e) => {
   }
 });
 document.getElementById('addQuestBtn').addEventListener('click', addQuest);
+document.getElementById('logTodayGoalsBtn').addEventListener('click', logTodaysGoals);
 document.getElementById('questInput').addEventListener('keydown', e => { if(e.key==='Enter') addQuest(); });
 document.getElementById('addLogBtn').addEventListener('click', addLog);
 document.getElementById('resetBtn').addEventListener('click', resetAll);
@@ -1166,9 +1591,15 @@ document.getElementById('weightLogBtn').addEventListener('click', logWeight);
 document.getElementById('weightInput').addEventListener('keydown', e => { if(e.key==='Enter') logWeight(); });
 document.getElementById('addSubjectBtn').addEventListener('click', addSubject);
 document.getElementById('subjectInput').addEventListener('keydown', e => { if(e.key==='Enter') addSubject(); });
-document.getElementById('addTopicBtn').addEventListener('click', addTopic);
-document.getElementById('topicInput').addEventListener('keydown', e => { if(e.key==='Enter') addTopic(); });
-document.getElementById('subjectSelect').addEventListener('change', e => { selectedSubjectId = e.target.value; render(); });
+document.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.classList.contains('new-school-goal')) { e.preventDefault(); const id = e.target.dataset.subject; addTopic(id, e.target, document.querySelector('.new-school-xp[data-subject="'+id+'"]')); } });
+document.getElementById('logWorkoutBtn').addEventListener('click', () => logCategory('Workout'));
+document.getElementById('logNutrientsBtn').addEventListener('click', () => logCategory('Nutrients'));
+document.getElementById('addNutrientBtn').addEventListener('click', addNutrient);
+document.getElementById('newNutrientInput').addEventListener('keydown', e => { if(e.key === 'Enter') addNutrient(); });
+document.getElementById('logSchoolBtn').addEventListener('click', () => logCategory('School'));
+document.getElementById('openHistoryBtn').addEventListener('click', () => { renderGoalHistory(); document.getElementById('historyModal').classList.remove('hidden'); });
+document.getElementById('closeHistoryBtn').addEventListener('click', () => document.getElementById('historyModal').classList.add('hidden'));
+document.getElementById('historyModal').addEventListener('click', e => { if(e.target.id === 'historyModal') e.currentTarget.classList.add('hidden'); });
 document.getElementById('openProgressBtn').addEventListener('click', () => {
   renderProgressModal();
   document.getElementById('progressModal').classList.remove('hidden');
