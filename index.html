@@ -12,6 +12,47 @@
 <meta name="theme-color" content="#0e2032">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!--
+  CLOUD SYNC SETUP — fill in the block below with your own Firebase project's
+  config (Firebase console → Project settings → General → "Your apps" → the
+  web app → SDK setup and configuration → Config). This is the only edit
+  needed; everything else wires itself up automatically. The config values
+  are not secret — Firebase security is enforced by Firestore Rules, not by
+  hiding this object — so it's fine for it to sit in a public repo.
+-->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCY1b_1AGRuqZKcbgO58RU1798qak4TswE",
+    authDomain: "winter-arc-2026-a035b.firebaseapp.com",
+    projectId: "winter-arc-2026-a035b",
+    storageBucket: "winter-arc-2026-a035b.firebasestorage.app",
+    messagingSenderId: "843754703229",
+    appId: "1:843754703229:web:468a0bed068a551721e414"
+  };
+
+  try{
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window.cloudStorage = {
+      async get(syncCode){
+        const snap = await getDoc(doc(db, 'trainingLogs', syncCode));
+        return snap.exists() ? snap.data().data : null;
+      },
+      async set(syncCode, jsonString){
+        await setDoc(doc(db, 'trainingLogs', syncCode), { data: jsonString, updatedAt: serverTimestamp() }, { merge: true });
+      }
+    };
+  } catch(e){
+    console.error('Firebase init failed — fill in firebaseConfig in <head>.', e);
+    window.cloudStorage = null;
+  }
+  window.cloudStorageReady = true;
+</script>
+
 <style>
   :root{
     --bg: #0e2032;
@@ -341,6 +382,7 @@
     padding: 20px;
   }
   .modal-overlay.hidden{ display:none; }
+  .hidden{ display:none !important; }
   .modal-box{
     background: var(--bg-alt); border: 1px solid var(--panel-line);
     border-radius: 16px; padding: 22px; max-width: 640px; width: 100%;
@@ -380,8 +422,7 @@
     45% { transform: scale(1.28); }
     100% { transform: scale(1); }
   }
-  .school-goal-checkbox:checked,
-  .subject-complete-checkbox:checked {
+  .school-goal-checkbox:checked {
     accent-color: var(--moss);
   }
   .school-goal-checkbox.just-checked,
@@ -400,6 +441,8 @@
   }
   .subject-xp-label { display:flex; align-items:center; gap:8px; color:var(--text-dim); font-size:12px; }
 
+  .subject-log-btn, .topic-log-btn { font-size:11px; padding:5px 8px; white-space:nowrap; }
+  .subject-log-btn:disabled, .topic-log-btn:disabled { opacity:.65; cursor:default; }
 </style>
 </head>
 <body class="theme-night">
@@ -538,7 +581,7 @@
   </div>
 
   <div class="section-title" style="justify-content:space-between;">
-    <span>Arc Progress <span class="count" id="arcCount"></span></span>
+    <span><span id="arcProgressDateLabel"></span> <span class="count" id="arcCount"></span></span>
     <button class="btn ghost" id="openProgressBtn" style="font-family:'JetBrains Mono', monospace; font-size:11px; padding:6px 12px;">View Progress →</button>
   </div>
   <div class="arc-strip" id="arcStrip"></div>
@@ -593,7 +636,6 @@
     <div class="section-title">Weight</div>
     <div class="add-row">
       <input type="number" step="0.1" id="weightInput" placeholder="kg" style="width:100px;">
-      <button class="btn" id="weightLogBtn">Log today's weight</button>
       <button class="btn ghost log-goal-btn" data-logitem="weight" style="padding:6px 10px;font-size:11px;">Log it</button>
     </div>
     <div class="footer-note" id="weightLogStatus" style="margin-top:8px;"></div>
@@ -610,17 +652,6 @@
     <button class="btn ghost" id="logSchoolBtn" style="width:100%;margin-top:12px;">Log it</button>
   </div>
 
-  <div class="card">
-    <div class="section-title">Training Log</div>
-    <div class="add-row">
-      <input type="text" id="logExercise" placeholder="Exercise" style="flex:1.4">
-      <input type="number" id="logValue" placeholder="Value" style="width:80px">
-      <input type="text" id="logUnit" placeholder="unit" style="width:70px">
-      <button class="btn ghost" id="addLogBtn">Log it</button>
-    </div>
-    <div id="logList" style="margin-top:10px;"></div>
-  </div>
-
   <div class="card" id="dailyLogCard">
     <div class="section-title">Daily Goal Log</div>
     <div class="footer-note" style="margin-bottom:12px;">Log every goal and category for today. Completed entries earn XP; incomplete or empty entries earn 0 XP.</div>
@@ -632,6 +663,42 @@
   <div class="footer-row">
     <span class="footer-note" id="startNote"></span>
     <button class="btn danger" id="resetBtn">Reset all progress</button>
+  </div>
+  <div class="footer-row" style="margin-top:8px;">
+    <span class="footer-note" id="syncNote"></span>
+    <button class="btn ghost" id="changeSyncBtn" style="font-size:11px; padding:5px 10px;">Change device sync</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="syncModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="section-title">Connect this device</div>
+    </div>
+    <p class="footer-note" style="font-size:12px; line-height:1.5; margin-bottom:14px;">
+      Your data syncs to the cloud using a short code. Create one the first time you
+      set this up, then enter that same code on any other device (or browser) to see
+      the same data there.
+    </p>
+
+    <div class="subject-card">
+      <div class="subject-head" style="margin-bottom:6px;"><span>New here</span></div>
+      <button class="btn" id="createSyncBtn">Create a new sync code</button>
+      <div id="newSyncCodeBox" class="hidden" style="margin-top:12px;">
+        <div class="footer-note" style="margin-bottom:6px;">Your code — write this down, you'll need it on other devices:</div>
+        <div id="newSyncCodeDisplay" style="font-family:'JetBrains Mono',monospace; font-size:28px; letter-spacing:4px; color:var(--amber); text-align:center; margin:10px 0;"></div>
+        <button class="btn" id="confirmNewSyncBtn" style="width:100%;">Continue</button>
+      </div>
+    </div>
+
+    <div class="subject-card">
+      <div class="subject-head" style="margin-bottom:6px;"><span>Already have a code</span></div>
+      <div class="add-row">
+        <input type="text" id="existingSyncInput" placeholder="Enter your sync code" style="text-transform:uppercase;">
+        <button class="btn ghost" id="connectExistingBtn">Connect</button>
+      </div>
+    </div>
+    <div class="footer-note" id="syncError" style="color:var(--danger); margin-top:8px;"></div>
   </div>
 </div>
 
@@ -674,19 +741,19 @@ function applyTheme(){
   document.getElementById('themeToggle').textContent = labelMap[themeMode];
 }
 
-async function loadTheme(){
+function loadTheme(){
   try{
-    const res = await window.storage.get(THEME_KEY, false);
-    if(res && res.value) themeMode = res.value;
+    const val = localStorage.getItem(THEME_KEY);
+    if(val) themeMode = val;
   } catch(e){ /* default to auto */ }
   applyTheme();
 }
 
-async function cycleTheme(){
+function cycleTheme(){
   const order = ['auto', 'day', 'night'];
   themeMode = order[(order.indexOf(themeMode) + 1) % order.length];
   applyTheme();
-  try{ await window.storage.set(THEME_KEY, themeMode, false); } catch(e){}
+  try{ localStorage.setItem(THEME_KEY, themeMode); } catch(e){}
 }
 
 document.getElementById('themeToggle').addEventListener('click', cycleTheme);
@@ -722,10 +789,24 @@ function getNutrientDefinitions(){
   return {...NUTRIENTS, ...custom};
 }
 
-function arcEndDate(){
-  const d = new Date(ARC_START);
-  d.setDate(d.getDate() + ARC_TOTAL_DAYS - 1);
+// Pure UTC date-string arithmetic. Never construct a Date from a date-only
+// string plus a time part (e.g. "2026-10-01T00:00:00") — that parses as
+// LOCAL time, while a bare date-only string ("2026-10-01") parses as UTC.
+// Mixing the two caused a day to drift depending on the viewer's timezone
+// (and would additionally misbehave across a DST transition, which falls
+// inside the arc on Oct 25, 2026). Everything below stays in UTC.
+function dateFromISO(dateStr){
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+function addDaysISO(dateStr, days){
+  const d = dateFromISO(dateStr);
+  d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0,10);
+}
+
+function arcEndDate(){
+  return addDaysISO(ARC_START, ARC_TOTAL_DAYS - 1);
 }
 
 let state = null;
@@ -791,6 +872,10 @@ function migrateState(){
   state.startDate = ARC_START;
 }
 
+function dayIsFinished(dateStr){
+  return dateStr < todayStr();
+}
+
 function dayIsSuccessful(dateStr){
   const dl = state.dailyLogs[dateStr];
   if(!dl) return false;
@@ -804,12 +889,11 @@ function dayIsSuccessful(dateStr){
 
 function computeStreak(){
   let streak = 0;
-  let d = new Date();
-  if(!dayIsSuccessful(todayStr())) d.setDate(d.getDate() - 1);
+  let ds = todayStr();
+  if(!dayIsSuccessful(ds)) ds = addDaysISO(ds, -1);
   for(;;){
-    const ds = d.toISOString().slice(0,10);
     if(ds < ARC_START) break;
-    if(dayIsSuccessful(ds)){ streak++; d.setDate(d.getDate() - 1); }
+    if(dayIsSuccessful(ds)){ streak++; ds = addDaysISO(ds, -1); }
     else break;
   }
   return streak;
@@ -823,18 +907,39 @@ function computeSleepHours(bed, wake){
   return diff/60;
 }
 
+const SYNC_KEY = 'winterArcSyncCode';
+let syncCode = null;
+
+function waitForCloudStorage(){
+  return new Promise(resolve => {
+    if(window.cloudStorageReady) return resolve();
+    const check = () => { if(window.cloudStorageReady) resolve(); else setTimeout(check, 30); };
+    check();
+  });
+}
+
+function generateSyncCode(){
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O/1/I — avoids mixups
+  let code = '';
+  for(let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
 async function loadState(){
+  await waitForCloudStorage();
   try{
-    const res = await window.storage.get(STATE_KEY, false);
-    if(res && res.value){
-      state = JSON.parse(res.value);
+    if(!window.cloudStorage) throw new Error('cloud storage unavailable — check firebaseConfig in <head>');
+    const raw = await window.cloudStorage.get(syncCode);
+    if(raw){
+      state = JSON.parse(raw);
     } else {
       state = defaultState();
       await saveState();
     }
   } catch(e){
+    console.error('cloud load failed', e);
+    document.getElementById('syncError').textContent = 'Could not reach the cloud database — check your connection and Firebase setup.';
     state = defaultState();
-    await saveState();
   }
   migrateState();
   render();
@@ -842,9 +947,52 @@ async function loadState(){
 
 async function saveState(){
   try{
-    await window.storage.set(STATE_KEY, JSON.stringify(state), false);
-  } catch(e){ console.error('save failed', e); }
+    await waitForCloudStorage();
+    if(!window.cloudStorage) throw new Error('cloud storage unavailable');
+    await window.cloudStorage.set(syncCode, JSON.stringify(state));
+  } catch(e){ console.error('cloud save failed', e); }
 }
+
+async function initSync(){
+  syncCode = localStorage.getItem(SYNC_KEY);
+  if(syncCode){
+    document.getElementById('syncModal').classList.add('hidden');
+    document.getElementById('syncNote').textContent = 'Synced: ' + syncCode;
+    await loadState();
+    return;
+  }
+  document.getElementById('syncModal').classList.remove('hidden');
+}
+
+let pendingNewSyncCode = null;
+document.getElementById('createSyncBtn').addEventListener('click', () => {
+  pendingNewSyncCode = generateSyncCode();
+  document.getElementById('newSyncCodeDisplay').textContent = pendingNewSyncCode;
+  document.getElementById('newSyncCodeBox').classList.remove('hidden');
+});
+document.getElementById('confirmNewSyncBtn').addEventListener('click', async () => {
+  if(!pendingNewSyncCode) return;
+  localStorage.setItem(SYNC_KEY, pendingNewSyncCode);
+  syncCode = pendingNewSyncCode;
+  document.getElementById('syncModal').classList.add('hidden');
+  document.getElementById('syncNote').textContent = 'Synced: ' + syncCode;
+  await loadState();
+});
+document.getElementById('connectExistingBtn').addEventListener('click', async () => {
+  const code = document.getElementById('existingSyncInput').value.trim().toUpperCase();
+  if(!code) return;
+  localStorage.setItem(SYNC_KEY, code);
+  syncCode = code;
+  document.getElementById('syncModal').classList.add('hidden');
+  document.getElementById('syncNote').textContent = 'Synced: ' + syncCode;
+  await loadState();
+});
+document.getElementById('changeSyncBtn').addEventListener('click', () => {
+  document.getElementById('newSyncCodeBox').classList.add('hidden');
+  document.getElementById('existingSyncInput').value = '';
+  document.getElementById('syncError').textContent = '';
+  document.getElementById('syncModal').classList.remove('hidden');
+});
 
 function daysBetween(a, b){
   const d1 = new Date(a), d2 = new Date(b);
@@ -1004,21 +1152,24 @@ function render(){
 
   renderSchool();
 
-  // Logs
+  // Logs (standalone Training Log card was removed from this build — guard
+  // so render() doesn't throw on a missing element every time it runs)
   const logList = document.getElementById('logList');
-  logList.innerHTML = '';
-  if(state.logs.length === 0){
-    logList.innerHTML = '<div class="empty">Nothing logged yet.</div>';
-  } else {
-    state.logs.slice().reverse().slice(0, 15).forEach(l => {
-      const row = document.createElement('div');
-      row.className = 'log-entry';
-      row.innerHTML = `
-        <div class="le-main"><span>${escapeHtml(l.exercise)}</span><span class="le-val">${l.noValue || l.value === '' ? '0 XP · No value' : escapeHtml(String(l.value)) + escapeHtml(l.unit||'')}</span></div>
-        <span class="le-date">${l.date}</span>
-      `;
-      logList.appendChild(row);
-    });
+  if(logList){
+    logList.innerHTML = '';
+    if(state.logs.length === 0){
+      logList.innerHTML = '<div class="empty">Nothing logged yet.</div>';
+    } else {
+      state.logs.slice().reverse().slice(0, 15).forEach(l => {
+        const row = document.createElement('div');
+        row.className = 'log-entry';
+        row.innerHTML = `
+          <div class="le-main"><span>${escapeHtml(l.exercise)}</span><span class="le-val">${l.noValue || l.value === '' ? '0 XP · No value' : escapeHtml(String(l.value)) + escapeHtml(l.unit||'')}</span></div>
+          <span class="le-date">${l.date}</span>
+        `;
+        logList.appendChild(row);
+      });
+    }
   }
   renderGoalHistory();
   const loggedToday = !!state.goalHistory[todayStr()];
@@ -1045,15 +1196,21 @@ function renderSchool(){
     return;
   }
   state.subjects.forEach(subject => {
+    const subjectLogEntry = (state.goalHistory?.[todayStr()]?.entries || []).find(entry => entry.id === 'school-subject:' + subject.id);
     const allDone = subject.topics.length > 0 && subject.topics.every(t => dl.schoolGoals.includes(t.id));
+    const subjectDone = allDone || Boolean(subjectLogEntry?.done);
     if(subject.xp === undefined) subject.xp = 10;
     const card = document.createElement('div');
     card.className = 'subject-card';
     card.innerHTML = `
       <div class="subject-head">
-        <label><input type="checkbox" class="subject-complete-checkbox" data-subject="${subject.id}" ${allDone ? 'checked' : ''} ${subject.topics.length ? '' : 'disabled title="Add a sub-goal before completing this subject"'}><span>${escapeHtml(subject.name)}</span></label>
+        <label style="display:flex;align-items:center;gap:9px;min-width:0;cursor:pointer;">
+          <div class="quest-check subject-complete-checkbox ${subjectDone ? 'checked' : ''}" data-subject="${subject.id}" role="checkbox" aria-checked="${subjectDone}" tabindex="0">${subjectDone ? '✓' : ''}</div>
+          <span>${escapeHtml(subject.name)}</span>
+        </label>
         <div class="subject-head-right">
           <span class="count">${subject.topics.filter(t => dl.schoolGoals.includes(t.id)).length}/${subject.topics.length}</span><span class="quest-xp">+${Math.max(0, Number(subject.xp)||0)}xp subject</span>
+          <button type="button" class="btn ghost subject-log-btn" data-logsubject="${subject.id}" ${subjectDone ? 'disabled' : ''}>${subjectDone ? 'Logged' : 'Log it'}</button>
           <button type="button" class="subject-delete" data-delsubject="${subject.id}" aria-label="Delete ${escapeHtml(subject.name)} subject" title="Delete subject">Delete</button>
         </div>
       </div>
@@ -1073,13 +1230,10 @@ function renderSchool(){
       render();
     });
     const subjectCheckbox = card.querySelector('.subject-complete-checkbox');
-    subjectCheckbox.addEventListener('change', async () => {
-      if(!subject.topics.length){
-        subjectCheckbox.checked = false;
-        subjectCheckbox.disabled = true;
-        return;
-      }
-      if(subjectCheckbox.checked){
+    const handleSubjectToggle = async () => {
+      if(subjectCheckbox.style.pointerEvents === 'none') return;
+      const nextChecked = !subjectCheckbox.classList.contains('checked');
+      if(nextChecked){
         subjectCheckbox.classList.remove('just-checked');
         void subjectCheckbox.offsetWidth;
         subjectCheckbox.classList.add('just-checked');
@@ -1087,15 +1241,30 @@ function renderSchool(){
         void card.offsetWidth;
         card.classList.add('just-completed');
       }
-      subjectCheckbox.disabled = true;
+      subjectCheckbox.style.pointerEvents = 'none';
       try {
-        await toggleSubject(subject.id, subjectCheckbox.checked);
+        await toggleSubject(subject.id, nextChecked);
       } catch (error) {
         console.error('Could not update subject completion:', error);
-        subjectCheckbox.checked = !subjectCheckbox.checked;
         showLogToast('Could not save subject · 0 XP');
       } finally {
-        subjectCheckbox.disabled = !subject.topics.length;
+        subjectCheckbox.style.pointerEvents = '';
+      }
+    };
+    subjectCheckbox.addEventListener('click', handleSubjectToggle);
+    subjectCheckbox.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); handleSubjectToggle(); }
+    });
+    const subjectLogButton = card.querySelector('[data-logsubject]');
+    subjectLogButton.addEventListener('click', async () => {
+      if(subjectLogEntry?.done) return;
+      subjectLogButton.disabled = true;
+      try {
+        await toggleSubject(subject.id, true);
+      } catch(error) {
+        console.error('Could not log subject:', error);
+        subjectLogButton.disabled = false;
+        showLogToast('Could not save subject · 0 XP');
       }
     });
     card.querySelector('[data-delsubject]').addEventListener('click', (event) => {
@@ -1113,6 +1282,7 @@ function renderSchool(){
       row.innerHTML = `
         <input type="checkbox" class="school-goal-checkbox" data-topic="${t.id}" ${done ? 'checked' : ''} aria-label="Complete ${escapeHtml(t.text)}" style="width:18px;height:18px;flex-shrink:0;">
         <div class="quest-text ${done ? 'checked' : ''}">${escapeHtml(t.text)} <span class="quest-xp">+${Number(t.xp ?? 10)}xp</span></div>
+        <button type="button" class="btn ghost topic-log-btn" data-logtopic="${t.id}" ${done ? 'disabled' : ''}>${done ? 'Done' : 'Log it'}</button>
         <button class="quest-del" data-deltopic="${t.id}" aria-label="Delete goal">✕</button>`;
       const goalCheckbox = row.querySelector('.school-goal-checkbox');
       goalCheckbox.addEventListener('change', () => {
@@ -1123,6 +1293,12 @@ function renderSchool(){
           goalCheckbox.classList.add('just-checked');
           row.classList.add('just-completed');
         }
+        toggleTopic(t.id);
+      });
+      const topicLogButton = row.querySelector('[data-logtopic]');
+      topicLogButton.addEventListener('click', () => {
+        if(dl.schoolGoals.includes(t.id)) return;
+        topicLogButton.disabled = true;
         toggleTopic(t.id);
       });
       row.querySelector('[data-deltopic]').addEventListener('click', (event) => {
@@ -1141,21 +1317,20 @@ function renderProgressModal(){
   grid.innerHTML = '';
   const today = todayStr();
   let filled = 0, past = 0;
-  let d = new Date(ARC_START + 'T00:00:00');
+  let ds = ARC_START;
   const daysWrap = document.createElement('div');
   daysWrap.className = 'dot-days';
   for(let i = 0; i < ARC_TOTAL_DAYS; i++){
-    const ds = d.toISOString().slice(0,10);
-    const ok = dayIsSuccessful(ds);
+    const ok = dayIsFinished(ds);
     if(ds <= today){ past++; if(ok) filled++; }
     const dot = document.createElement('div');
     dot.className = 'day-dot' + (ok ? ' filled' : '') + (ds === today ? ' today' : '');
     dot.title = ds;
     daysWrap.appendChild(dot);
-    d.setDate(d.getDate() + 1);
+    ds = addDaysISO(ds, 1);
   }
   grid.appendChild(daysWrap);
-  document.getElementById('progressSummary').textContent = filled + ' / ' + ARC_TOTAL_DAYS + ' days complete · ' + computeStreak() + ' day streak';
+  document.getElementById('progressSummary').textContent = filled + ' / ' + ARC_TOTAL_DAYS + ' days elapsed · ' + computeStreak() + ' day streak';
 }
 
 async function toggleQuest(id){
@@ -1340,7 +1515,9 @@ function collectDailyGoals(){
   state.subjects.forEach(subject => subject.topics.forEach(t => items.push({id:'school:'+subject.id+':'+t.id, name:t.text, category:'School · '+subject.name, done:dl.schoolGoals.includes(t.id), xp:Math.max(0, Number(t.xp ?? 10)||0)})));
   const nutrientDefinitions = getNutrientDefinitions();
   Object.keys(nutrientDefinitions).forEach(key => items.push({id:'nutrient:'+key, name:nutrientDefinitions[key], category:'Nutrients', done:!!dl.nutrients[key], xp:5}));
-  items.push({id:'sleep', name:'Sleep schedule', category:'Sleep', done:!!(dl.sleep.bed && dl.sleep.wake), detail:dl.sleep.bed && dl.sleep.wake ? dl.sleep.bed+'–'+dl.sleep.wake : 'Not logged', xp:5});
+  const sleepTimesEntered = !!(dl.sleep.bed && dl.sleep.wake);
+  const sleepHours = sleepTimesEntered ? computeSleepHours(dl.sleep.bed, dl.sleep.wake) : 0;
+  items.push({id:'sleep', name:'Sleep schedule', category:'Sleep', done:sleepTimesEntered && sleepHours >= 8, detail:sleepTimesEntered ? dl.sleep.bed+'–'+dl.sleep.wake+' ('+sleepHours.toFixed(1)+' hrs)' : 'Not logged', xp:5});
   items.push({id:'weight', name:'Weight', category:'Weight', done:dl.weight !== null && dl.weight !== undefined, detail:dl.weight !== null && dl.weight !== undefined ? dl.weight+' kg' : (dl.weightLogEmpty ? 'No value entered' : 'Not logged'), xp:5});
   const todaysTrainingLogs = state.logs
     .map((log, index) => ({log, index}))
@@ -1428,7 +1605,7 @@ async function logCategory(category){
 
 async function toggleSubject(subjectId, checked){
   const subject = state.subjects.find(s => s.id === subjectId);
-  if(!subject || !subject.topics.length) return;
+  if(!subject) return;
 
   const dl = getDayLog(todayStr());
   const topicIds = subject.topics.map(topic => topic.id);
@@ -1548,7 +1725,12 @@ document.addEventListener('click', (e) => {
     if(id === 'sleep') {
       const bed = document.getElementById('sleepBed').value;
       const wake = document.getElementById('sleepWake').value;
-      logGoalById(id).then(() => showLogToast(bed && wake ? 'Sleep logged · ' + bed + '–' + wake + ' · 5 XP' : 'Sleep logged · Incomplete times · 0 XP'));
+      logGoalById(id).then(() => {
+        const hours = bed && wake ? computeSleepHours(bed, wake) : 0;
+        const xp = bed && wake && hours >= 8 ? 5 : 0;
+        const result = !bed || !wake ? 'enter both times' : hours.toFixed(1) + ' hrs · ' + (hours >= 8 ? 'goal reached' : '8 hrs needed');
+        showLogToast('Sleep logged · ' + result + ' · ' + xp + ' XP');
+      });
     } else if(id === 'weight') {
       logWeight();
     } else { logGoalById(id); }
@@ -1583,11 +1765,10 @@ document.addEventListener('click', (e) => {
 document.getElementById('addQuestBtn').addEventListener('click', addQuest);
 document.getElementById('logTodayGoalsBtn').addEventListener('click', logTodaysGoals);
 document.getElementById('questInput').addEventListener('keydown', e => { if(e.key==='Enter') addQuest(); });
-document.getElementById('addLogBtn').addEventListener('click', addLog);
+// Standalone Training Log section removed; no addLogBtn listener needed.
 document.getElementById('resetBtn').addEventListener('click', resetAll);
 document.getElementById('sleepBed').addEventListener('change', saveSleep);
 document.getElementById('sleepWake').addEventListener('change', saveSleep);
-document.getElementById('weightLogBtn').addEventListener('click', logWeight);
 document.getElementById('weightInput').addEventListener('keydown', e => { if(e.key==='Enter') logWeight(); });
 document.getElementById('addSubjectBtn').addEventListener('click', addSubject);
 document.getElementById('subjectInput').addEventListener('keydown', e => { if(e.key==='Enter') addSubject(); });
@@ -1608,7 +1789,17 @@ document.getElementById('closeProgressBtn').addEventListener('click', () => {
   document.getElementById('progressModal').classList.add('hidden');
 });
 
-loadState();
+initSync();
 </script>
+
+<script>
+(function updateArcProgressDateLabel() {
+  const label = document.getElementById('arcProgressDateLabel');
+  if (!label) return;
+  const now = new Date();
+  label.textContent = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+})();
+</script>
+
 </body>
 </html>
