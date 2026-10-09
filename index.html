@@ -57,7 +57,8 @@
   :root{
     --bg: #0e2032;
     --bg-alt: #14293d;
-    --panel: rgba(24, 42, 62, 0.72);
+    --panel-rgb: 24, 42, 62;
+    --panel: rgba(var(--panel-rgb), var(--card-alpha, 0.72));
     --panel-line: rgba(255, 233, 168, 0.18);
     --cobalt: #4a63ff;
     --cobalt-dim: #2c3570;
@@ -84,23 +85,23 @@
      Three scenes (Alabasta by day, Wano at dusk, Water 7 at night) stacked
      behind the app and cross-faded. Each theme also retunes the UI tokens.
      Kept deliberately quiet: silhouettes, low contrast, slow motion. */
-  body.theme-day{
+  body.theme-day, body.pal-day{
     --bg: #2a1a10; --bg-alt: #352213;
-    --panel: rgba(58, 36, 20, 0.66); --panel-line: rgba(255, 214, 160, 0.20);
+    --panel-rgb: 58, 36, 20; --panel: rgba(var(--panel-rgb), var(--card-alpha, 0.66)); --panel-line: rgba(255, 214, 160, 0.20);
     --cobalt: #c9482f; --amber: #f2b441; --moss: #7cc47a;
     --text: #f7efe4; --text-dim: #d4bea4; --text-faint: #ab937a;
     --nav-bg: rgba(44, 27, 15, 0.88); --tip-bg: #24160c; --glow: rgba(255, 200, 110, 0.20);
   }
-  body.theme-evening{
+  body.theme-evening, body.pal-evening{
     --bg: #1a0d18; --bg-alt: #261423;
-    --panel: rgba(38, 19, 34, 0.68); --panel-line: rgba(255, 186, 160, 0.18);
+    --panel-rgb: 38, 19, 34; --panel: rgba(var(--panel-rgb), var(--card-alpha, 0.68)); --panel-line: rgba(255, 186, 160, 0.18);
     --cobalt: #c4433a; --amber: #f2a35c; --moss: #6fc79a;
     --text: #f5ece8; --text-dim: #cbb2b6; --text-faint: #9c8292;
     --nav-bg: rgba(30, 15, 27, 0.88); --tip-bg: #170b15; --glow: rgba(242, 140, 90, 0.20);
   }
-  body.theme-night{
+  body.theme-night, body.pal-night{
     --bg: #08172a; --bg-alt: #0f2238;
-    --panel: rgba(12, 28, 50, 0.70); --panel-line: rgba(160, 215, 255, 0.16);
+    --panel-rgb: 12, 28, 50; --panel: rgba(var(--panel-rgb), var(--card-alpha, 0.70)); --panel-line: rgba(160, 215, 255, 0.16);
     --cobalt: #3a86c8; --amber: #f5b84a; --moss: #48c78e;
     --text: #eceef7; --text-dim: #9fb0c8; --text-faint: #7c8ca6;
     --nav-bg: rgba(10, 22, 40, 0.88); --tip-bg: #071322; --glow: rgba(80, 160, 230, 0.20);
@@ -1011,6 +1012,198 @@
     width: 100%; padding: 1px 6px; margin: -1px -6px; border: none; outline: none; border-radius: 6px;
     background: rgba(255, 255, 255, .08); box-shadow: inset 0 -2px 0 var(--amber);
   }
+
+  /* ===== SETTINGS ===== */
+  body{ --panel: rgba(var(--panel-rgb), var(--card-alpha, 0.72)); }
+  .topbar-actions{ display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .theme-toggle > span{ max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 440px){
+    .topbar{ gap: 8px; }
+    .topbar .eyebrow{ letter-spacing: 2px; min-width: 0; }
+    .tt-auto{ display: none; }
+  }
+  .icon-btn, .set-back{
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--panel); border: 1px solid var(--panel-line); color: var(--text-dim); cursor: pointer;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: color .2s ease, border-color .2s ease;
+  }
+  .icon-btn svg, .set-back svg{ width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .45s cubic-bezier(.3, 1.4, .5, 1); }
+  .icon-btn:hover, .set-back:hover{ color: var(--text); }
+  .icon-btn:hover svg{ transform: rotate(40deg); }
+  .icon-btn.active{ color: var(--amber); border-color: color-mix(in srgb, var(--amber) 60%, transparent); }
+  .icon-btn.active svg{ transform: rotate(90deg); }
+  #tab-settings{ padding-bottom: 24px; }
+  .set-head{ display: flex; align-items: center; gap: 12px; margin: 2px 0 12px; }
+  .set-head .section-title{ margin: 0; font-size: 26px; }
+  .set-search{
+    width: 100%; padding: 11px 14px 11px 40px; margin-bottom: 10px; border-radius: 12px; font-size: 14px; color: var(--text);
+    border: 1px solid var(--panel-line); outline: none;
+    background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a4b0c8' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='M16 16l4.5 4.5'/%3E%3C/svg%3E") no-repeat 13px center / 17px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .set-search:focus{ border-color: var(--amber); }
+  .set-intro{ font-size: 12px; color: var(--text-dim); margin: 0 0 14px; padding: 9px 14px; line-height: 1.7; border-radius: 12px; background: var(--panel); border: 1px solid var(--panel-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .chip{ display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: .4px; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--panel-line); color: var(--text-dim); white-space: nowrap; flex-shrink: 0; }
+  .chip.sync{ color: var(--moss); border-color: color-mix(in srgb, var(--moss) 45%, transparent); }
+  .chip.dev{ color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, transparent); }
+  details.set-sec{ padding: 0; overflow: hidden; margin-bottom: 10px; }
+  details.set-sec > summary{ list-style: none; display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+  details.set-sec > summary::-webkit-details-marker{ display: none; }
+  details.set-sec > summary:hover .set-st b{ color: var(--amber); }
+  .set-ico{ width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--amber) 14%, transparent); color: var(--amber); }
+  .set-ico svg{ width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .set-st{ flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .set-st b{ font-size: 14.5px; font-weight: 700; transition: color .15s ease; }
+  .set-st small{ font-size: 12px; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .set-chev svg{ width: 18px; height: 18px; display: block; fill: none; stroke: var(--text-faint); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s ease; }
+  details.set-sec[open] .set-chev svg{ transform: rotate(180deg); }
+  .set-body{ padding: 2px 16px 14px; border-top: 1px solid var(--panel-line); animation: setOpen .25s ease-out; }
+  @keyframes setOpen{ from{ opacity: 0; transform: translateY(-4px); } to{ opacity: 1; transform: none; } }
+  .set-row{ display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--panel-line) 65%, transparent); }
+  .set-row.stack{ flex-direction: column; align-items: stretch; gap: 0; }
+  .set-row.filtered, details.set-sec.filtered{ display: none; }
+  .set-lab{ display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .set-lab b{ font-size: 13.5px; font-weight: 600; }
+  .set-lab small{ font-size: 11.5px; color: var(--text-faint); line-height: 1.45; }
+  .set-ctl{ display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .set-row.stack .set-ctl{ display: block; }
+  .set-ctl input.wide{ width: 100%; }
+  .set-row:not(.stack) > .set-ctl > input[type=text]{ width: 190px; }
+  .set-ctl select{ max-width: 100%; }
+  .num-wrap{ display: inline-flex; align-items: center; gap: 6px; }
+  .num-wrap input{ width: 84px; }
+  .num-suffix{ font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-faint); white-space: nowrap; }
+  #tab-settings input[type=date], #tab-settings input[type=time]{ color-scheme: dark; }
+  /* switches */
+  .switch{ position: relative; display: inline-flex; flex-shrink: 0; cursor: pointer; }
+  .switch input{ position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+  .switch-track{ position: relative; width: 42px; height: 24px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid var(--panel-line); transition: background .2s ease, border-color .2s ease; }
+  .switch-dot{ position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .4); transition: transform .22s cubic-bezier(.3, 1.3, .6, 1); }
+  .switch input:checked + .switch-track{ background: var(--moss); border-color: var(--moss); }
+  .switch input:checked + .switch-track .switch-dot{ transform: translateX(18px); }
+  .switch input:focus-visible + .switch-track{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  /* segmented buttons */
+  .seg{ display: inline-flex; flex-wrap: wrap; padding: 3px; gap: 2px; border-radius: 10px; background: var(--bg); border: 1px solid var(--panel-line); }
+  .seg button{ border: none; background: transparent; color: var(--text-dim); font: 600 12.5px 'Inter', sans-serif; padding: 6px 12px; border-radius: 7px; cursor: pointer; transition: background .15s ease, color .15s ease; }
+  .seg button:hover{ color: var(--text); }
+  .seg button.active{ background: var(--amber); color: #1a1208; }
+  .range-wrap{ display: inline-flex; align-items: center; gap: 10px; }
+  #tab-settings input[type=range]{ accent-color: var(--amber); width: 150px; padding: 0; }
+  .range-val{ font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-dim); min-width: 40px; text-align: right; }
+  #tab-settings input[type=color]{ width: 40px; height: 34px; padding: 3px; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
+  .set-pair{ display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .set-note{ font-size: 12px; color: var(--text-dim); margin: 8px 0 2px; line-height: 1.55; }
+  .set-note.rule{ padding: 10px 12px; border-radius: 10px; color: var(--text); background: color-mix(in srgb, var(--moss) 9%, transparent); border: 1px solid color-mix(in srgb, var(--moss) 30%, transparent); }
+  /* lists */
+  .set-list{ display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .set-li{ display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: rgba(255, 255, 255, .03); border: 1px solid color-mix(in srgb, var(--panel-line) 60%, transparent); }
+  .set-li > input[type=text]{ flex: 1; min-width: 0; }
+  .set-li.add{ background: transparent; border-style: dashed; }
+  .set-li.muted .set-li-name{ color: var(--text-faint); text-decoration: line-through; }
+  .set-li-name{ flex: 1; min-width: 0; font-size: 13px; display: flex; flex-direction: column; gap: 1px; }
+  .set-li-name b{ font-weight: 600; }
+  .set-li-name small{ font-size: 11px; color: var(--text-faint); }
+  .set-icon-btn{ width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; border: 1px solid var(--panel-line); background: transparent; color: var(--text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .set-icon-btn svg{ width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .set-icon-btn:hover{ color: var(--text); border-color: var(--text-faint); }
+  .set-icon-btn.del:hover{ color: var(--danger); border-color: var(--danger); }
+  .set-icon-btn.off{ opacity: .3; pointer-events: none; }
+  .set-empty{ font-size: 12.5px; color: var(--text-faint); padding: 6px 2px; }
+  .set-li.quest select{ width: 122px; }
+  .set-li.quest .num-wrap input{ width: 64px; }
+  .set-grid2{ display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .set-li.cat input[type=text]{ flex: 1; min-width: 0; }
+  .set-mini{ display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .set-mini small{ font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-faint); text-transform: uppercase; }
+  .mood-edit{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+  .mood-edit input{ width: 100%; text-align: center; }
+  .set-checks{ display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 10px; }
+  .set-check{ display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; font-size: 13px; cursor: pointer; background: rgba(255, 255, 255, .03); border: 1px solid color-mix(in srgb, var(--panel-line) 60%, transparent); }
+  .set-subject{ display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 12px; border: 1px solid var(--panel-line); }
+  .set-subject .set-li.head{ background: rgba(255, 255, 255, .07); }
+  .set-sublist{ display: flex; flex-direction: column; gap: 6px; margin-left: 6px; padding-left: 12px; border-left: 2px solid var(--panel-line); }
+  .set-sublist .num-wrap input, .set-li.head .num-wrap input{ width: 62px; }
+  .set-medal .medal{ width: 36px; height: 36px; display: block; }
+  .badge-li input[type=number]{ width: 82px; }
+  .set-foot{ display: flex; justify-content: flex-end; padding-top: 12px; }
+  .btn.small.armed{ background: var(--danger); color: #fff; border-color: var(--danger); animation: armShake .3s ease; }
+  @keyframes armShake{ 0%, 100%{ transform: translateX(0); } 25%{ transform: translateX(-3px); } 75%{ transform: translateX(3px); } }
+  .set-danger{ margin-top: 14px; padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 4px; border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+  .set-danger b{ font-size: 13.5px; }
+  .set-danger small{ font-size: 11.5px; color: var(--text-faint); }
+  .set-danger-btns{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .sync-code{ font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: 3px; color: var(--amber); padding: 5px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--panel-line); }
+  .imp-box{ display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; margin: 6px 0; border-radius: 10px; font-size: 12.5px; line-height: 1.5; background: rgba(255, 255, 255, .04); border: 1px solid var(--panel-line); }
+  .set-val{ font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); }
+  a.btn{ text-decoration: none; display: inline-block; }
+  .set-flash{
+    position: fixed; left: 50%; top: 14px; z-index: 60; max-width: calc(100vw - 32px); padding: 9px 16px; border-radius: 999px;
+    background: var(--nav-bg, rgba(10, 22, 40, .92)); border: 1px solid var(--panel-line); color: var(--text); font-size: 13px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .35); pointer-events: none; opacity: 0; transform: translate(-50%, -16px); transition: opacity .25s ease, transform .25s ease;
+  }
+  .set-flash.show{ opacity: 1; transform: translate(-50%, 0); }
+  .set-flash.warn{ border-color: var(--danger); }
+  /* backgrounds */
+  .bg-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 10px; margin-top: 10px; }
+  .bg-card{ display: flex; flex-direction: column; overflow: hidden; border-radius: 12px; border: 1px solid var(--panel-line); background: rgba(255, 255, 255, .03); }
+  .bg-card.current{ border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
+  .bg-thumb{ position: relative; aspect-ratio: 16 / 9; background: #0a1522; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-faint); }
+  .bg-thumb img, .bg-thumb video{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .bg-meta{ display: flex; flex-direction: column; gap: 3px; padding: 8px 10px 4px; }
+  .bg-meta b{ font-size: 13.5px; }
+  .bg-meta input{ width: 100%; padding: 6px 8px; font-weight: 600; }
+  .bg-meta small{ font-size: 11px; color: var(--text-faint); }
+  .bg-opts{ display: flex; flex-direction: column; gap: 6px; padding: 4px 10px; }
+  .bg-opts select{ width: 100%; }
+  .bg-actions{ display: flex; justify-content: space-between; gap: 6px; padding: 6px 10px 10px; }
+  .bg-card > .btn{ margin: 4px 10px 10px; align-self: flex-start; }
+  .bg-grid.builtin{ grid-template-columns: repeat(3, 1fr); }
+  .bg-grid.builtin .bg-thumb{ aspect-ratio: 16 / 10; }
+  .sched .set-li-name{ flex: 0 0 auto; font-size: 12px; color: var(--text-dim); padding-left: 4px; }
+  .sched select{ flex: 1; min-width: 0; }
+  .sched input[type=time]{ flex-shrink: 0; }
+  .bg-add{ display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-top: 12px; }
+  .bg-add small{ font-size: 11.5px; color: var(--text-faint); line-height: 1.5; }
+  /* phones */
+  @media (max-width: 560px){
+    .set-row{ flex-direction: column; align-items: stretch; gap: 8px; }
+    .set-row.stack{ gap: 0; }
+    .set-ctl{ justify-content: flex-start; }
+    .set-row:not(.stack) > .set-ctl > input[type=text]{ width: 100%; }
+    .set-li.quest{ flex-wrap: wrap; }
+    .set-li.quest > input[type=text]{ flex-basis: 100%; }
+    .set-grid2{ grid-template-columns: 1fr; }
+    .mood-edit{ grid-template-columns: repeat(3, 1fr); }
+    .range-wrap{ display: flex; width: 100%; }
+    #tab-settings input[type=range]{ flex: 1; width: auto; }
+    .set-st small{ white-space: normal; }
+    .bg-grid.builtin{ gap: 6px; }
+    .bg-grid.builtin .bg-meta{ padding: 6px 8px 2px; }
+    .bg-grid.builtin .bg-meta b{ font-size: 12.5px; }
+    .bg-grid.builtin .bg-meta small{ display: none; }
+    .bg-grid.builtin .bg-card > .btn{ margin: 4px 8px 8px; padding: 5px 8px; }
+  }
+
+  /* settings hooks used across the app */
+  :root{ --nav-bg: rgba(14, 30, 48, 0.9); --tip-bg: #0b1928; --glow: rgba(120, 170, 255, 0.18); }
+  #tab-today:not(.hidden){ display: flex; flex-direction: column; }
+  #tab-today > .hero{ order: 0; }
+  #tab-today > .history-open-row{ order: 99; }
+  .wrap{ zoom: var(--ui-zoom, 1); }
+  #heatmap{ overflow-x: auto; }
+  body.theme-custom .paint-grain, body.theme-custom .paint-brush{ display: none; }
+  .bg-dim{ position: absolute; inset: 0; background: #000; opacity: var(--bg-dim, 0); pointer-events: none; transition: opacity .3s ease; }
+  .scene-custom{ background: #05080f; }
+  body.theme-custom .scene-custom{ opacity: 1; }
+  .scene-custom img, .scene-custom video{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: var(--cbg-fit, cover); }
+  .scene-custom.missing::after{ content: 'This background file is not on this device'; position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); font-size: 12px; color: rgba(255, 255, 255, .5); }
+  body.motion-off .bg-scene *, body.motion-off .bg-scene *::before, body.motion-off .bg-scene *::after{ animation-play-state: paused !important; }
+  body.motion-calm .wn-petals, body.motion-calm .fx-embers, body.motion-calm .ab-sand, body.motion-calm .fx-spark,
+  body.motion-calm .ab-caravan, body.motion-calm .w7-train, body.motion-calm .w7-yagara, body.motion-calm .w7-dropx{ display: none; }
+  body.no-egg .wn-oni{ pointer-events: none !important; cursor: default; }
+  body.no-egg .place-name.clickable{ cursor: default; }
+  .weight-svg .goal{ stroke: var(--moss); stroke-width: 1.5; stroke-dasharray: 5 5; }
+  .weight-svg .goal-t{ fill: var(--moss); }
 </style>
 </head>
 <body class="theme-night">
@@ -1256,14 +1449,19 @@
       </svg>
     </div>
   </div>
+  <div class="scene scene-custom"><img class="hidden" alt=""><video class="hidden" muted loop playsinline autoplay disablepictureinpicture></video></div>
   <div class="paint-brush"></div>
   <div class="paint-grain"></div>
+  <div class="bg-dim"></div>
 </div>
 
 <div class="wrap" id="app">
   <header class="topbar">
-    <div class="eyebrow">⚓ // winter arc <span class="place-name" id="placeName"></span></div>
-    <button type="button" class="theme-toggle" id="themeToggle">auto</button>
+    <div class="eyebrow">⚓ // <span id="topLabel">winter arc</span> <span class="place-name" id="placeName"></span></div>
+    <div class="topbar-actions">
+      <button type="button" class="theme-toggle" id="themeToggle">auto</button>
+      <button type="button" class="icon-btn" id="settingsBtn" aria-label="Settings" title="Settings" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.17,10.17 L21.46,10.38 L21.46,13.62 L19.17,13.83 L18.36,15.78 L19.84,17.54 L17.54,19.84 L15.78,18.36 L13.83,19.17 L13.62,21.46 L10.38,21.46 L10.17,19.17 L8.22,18.36 L6.46,19.84 L4.16,17.54 L5.64,15.78 L4.83,13.83 L2.54,13.62 L2.54,10.38 L4.83,10.17 L5.64,8.22 L4.16,6.46 L6.46,4.16 L8.22,5.64 L10.17,4.83 L10.38,2.54 L13.62,2.54 L13.83,4.83 L15.78,5.64 L17.54,4.16 L19.84,6.46 L18.36,8.22Z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
+    </div>
   </header>
 
   <!-- ===== TODAY ===== -->
@@ -1287,10 +1485,10 @@
         <div class="xp-label" id="xpLabel">0 / 100 XP</div>
       </div>
     </div>
-    <div class="daily-line" id="dailyLine"></div>
-    <div class="week-strip" id="weekStrip" aria-label="This week"></div>
+    <div class="daily-line" id="dailyLine" data-section="quote"></div>
+    <div class="week-strip" id="weekStrip" aria-label="This week" data-section="week"></div>
 
-    <div class="card">
+    <div class="card" data-section="workout">
       <div class="card-head">
         <div class="section-title">Workout</div>
         <span class="count" id="questCount"></span>
@@ -1311,7 +1509,7 @@
       <div class="card-foot"><button class="btn ghost small" id="logWorkoutBtn">Log it</button></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-section="nutrients">
       <div class="card-head">
         <div class="section-title">Nutrients</div>
         <span class="count" id="nutCount"></span>
@@ -1325,7 +1523,7 @@
       <div class="card-foot"><button class="btn ghost small" id="logNutrientsBtn">Log it</button></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-section="water">
       <div class="card-head">
         <div class="section-title">Water</div>
         <span class="count" id="waterCount"></span>
@@ -1338,7 +1536,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" data-section="sleep">
       <div class="card-head">
         <div class="section-title">Sleep</div>
         <span class="count" id="sleepStreak"></span>
@@ -1357,7 +1555,7 @@
       <div class="card-foot"><button class="btn ghost small log-goal-btn" data-logitem="sleep">Log it</button></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-section="weight">
       <div class="card-head">
         <div class="section-title">Weight</div>
       </div>
@@ -1369,7 +1567,7 @@
       <div id="weightList" style="margin-top:10px;"></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-section="school">
       <div class="card-head">
         <div class="section-title">School Goals</div>
         <span class="count" id="topicCount"></span>
@@ -1383,7 +1581,7 @@
       <div class="card-foot"><button class="btn ghost small" id="logSchoolBtn">Log it</button></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-section="checkin">
       <div class="card-head">
         <div class="section-title">Daily check-in</div>
         <span class="count" id="checkinCount"></span>
@@ -1392,7 +1590,7 @@
       <textarea id="checkinNote" rows="2" placeholder="One line about today: what went well, what to fix tomorrow…" aria-label="Note for today"></textarea>
     </div>
 
-    <div class="card" id="dailyLogCard">
+    <div class="card" id="dailyLogCard" data-section="dailylog">
       <div class="section-title"><span class="ico">⚓</span>Daily Goal Log</div>
       <div class="footer-note" style="margin-bottom:12px;">Log every goal and category for today. Completed entries earn XP; incomplete or empty entries earn 0 XP.</div>
       <button class="btn" id="logTodayGoalsBtn" style="width:100%;">Log today's goals</button>
@@ -1428,6 +1626,8 @@
   </section>
 
   <!-- ===== BADGES ===== -->
+  <section class="tab-panel hidden" id="tab-settings" aria-label="Settings"></section>
+
   <section class="tab-panel hidden" id="tab-badges">
     <div class="card">
       <div class="card-head">
@@ -1522,36 +1722,123 @@ const STATE_KEY = 'training-log-state';
 const THEME_KEY = 'theme-mode-pref';
 let themeMode = 'auto';
 
+// ===== Device-only preferences (this browser only, never synced) =====
+const DEV_KEY = 'training-log-device';
+const DEV_DEFAULTS = {
+  schedule: [{start: '06:00', theme: 'day'}, {start: '17:00', theme: 'evening'}, {start: '18:00', theme: 'night'}],
+  motion: 'full',        // full | calm | off
+  dim: 0,                // 0 - .7 darkening of the background
+  cardAlpha: null,       // null = theme default, else .3 - 1
+  accent: '',            // '' = theme colours
+  textSize: 'normal',    // small | normal | large
+  confetti: true,
+  sound: true,
+  volume: .9,
+  easterEgg: true,
+  vibration: true,
+  xpPopups: true
+};
+function cloneJSON(v){ return JSON.parse(JSON.stringify(v)); }
+function loadDev(){
+  try{ return Object.assign(cloneJSON(DEV_DEFAULTS), JSON.parse(localStorage.getItem(DEV_KEY) || 'null') || {}); }
+  catch(e){ return cloneJSON(DEV_DEFAULTS); }
+}
+let DEV = loadDev();
+function saveDev(){ try{ localStorage.setItem(DEV_KEY, JSON.stringify(DEV)); } catch(e){} }
+function reduceMotion(){ return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+
+// ===== Custom backgrounds: files live in IndexedDB on this device =====
+const BG_DB = 'training-log-backgrounds', BG_STORE = 'files', BG_META_KEY = 'training-log-bg-meta';
+let BG_LIST = (() => { try{ return JSON.parse(localStorage.getItem(BG_META_KEY) || '[]') || []; } catch(e){ return []; } })();
+function saveBgMeta(){ try{ localStorage.setItem(BG_META_KEY, JSON.stringify(BG_LIST)); } catch(e){} }
+let bgDbPromise = null;
+function bgDb(){
+  if(!bgDbPromise) bgDbPromise = new Promise((resolve, reject) => {
+    if(!window.indexedDB) return reject(new Error('IndexedDB unavailable'));
+    const req = indexedDB.open(BG_DB, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(BG_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return bgDbPromise;
+}
+async function bgTx(mode, fn){
+  const db = await bgDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BG_STORE, mode);
+    const out = fn(tx.objectStore(BG_STORE));
+    tx.oncomplete = () => resolve(out && 'result' in out ? out.result : undefined);
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+}
+const bgPut = (id, blob) => bgTx('readwrite', st => st.put(blob, id));
+const bgGet = id => bgTx('readonly', st => st.get(id));
+const bgDel = id => bgTx('readwrite', st => st.delete(id));
+const bgUrls = {};
+async function bgUrl(id){
+  if(bgUrls[id]) return bgUrls[id];
+  try{
+    const blob = await bgGet(id);
+    if(!blob) return null;
+    bgUrls[id] = URL.createObjectURL(blob);
+    return bgUrls[id];
+  } catch(e){ return null; }
+}
+
 const THEME_ICONS = {
   auto:    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" class="ic-line"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" class="ic-fill"/></svg>',
   day:     '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.4" class="ic-fill"/><g class="ic-line"><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g></svg>',
   evening: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 16.5a6.5 6.5 0 0 1 13 0z" class="ic-fill"/><g class="ic-line"><path d="M2.5 16.5h19M5 20h14M12 4.5v2.4M5.6 8.4l1.6 1.6M18.4 8.4l-1.6 1.6"/></g></svg>',
-  night:   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1z" class="ic-fill"/><path d="M17.2 3.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" class="ic-fill"/></svg>'
+  night:   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1z" class="ic-fill"/><path d="M17.2 3.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" class="ic-fill"/></svg>',
+  custom:  '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5" class="ic-line"/><path d="M5.5 16.5l4.2-4.6 3 3.2 2.2-2.2 3.6 3.6z" class="ic-fill"/><circle cx="15.5" cy="9.5" r="1.6" class="ic-fill"/></svg>'
 };
-// Day = Alabasta (6-17), evening = Wano (17-18), night = Water 7 (18-6).
+// Built-in scenes. Custom backgrounds are added as 'bg:<id>' themes.
 const THEMES = {
-  day:     {place: 'alabasta', label: 'day',     bar: '#3a2414'},
-  evening: {place: 'wano',     label: 'evening', bar: '#24132e'},
-  night:   {place: 'water 7',  label: 'night',   bar: '#081426'}
+  day:     {place: 'alabasta', label: 'Alabasta', short: 'day',     bar: '#3a2414'},
+  evening: {place: 'wano',     label: 'Wano',     short: 'evening', bar: '#24132e'},
+  night:   {place: 'water 7',  label: 'Water 7',  short: 'night',   bar: '#081426'}
 };
+const PALETTE_BAR = {day: '#3a2414', evening: '#24132e', night: '#081426', classic: '#0e2032'};
+let activeTheme = 'day';
+function themeInfo(id){
+  if(THEMES[id]) return {...THEMES[id], icon: THEME_ICONS[id], builtin: true};
+  const bg = BG_LIST.find(b => 'bg:' + b.id === id);
+  if(bg) return {place: bg.name.toLowerCase(), label: bg.name, short: bg.name, bar: PALETTE_BAR[bg.palette] || PALETTE_BAR.classic, icon: THEME_ICONS.custom, builtin: false, bg};
+  return null;
+}
+function allThemeIds(){ return ['day', 'evening', 'night'].concat(BG_LIST.map(b => 'bg:' + b.id)); }
+function minutesOf(t){ const [h, m] = String(t || '0:0').split(':').map(Number); return (h || 0) * 60 + (m || 0); }
 function computeAutoTheme(){
-  const h = new Date().getHours();
-  if(h >= 6 && h < 17) return 'day';
-  if(h >= 17 && h < 18) return 'evening';
-  return 'night';
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const slots = (DEV.schedule || []).filter(sl => themeInfo(sl.theme)).slice().sort((a, b) => minutesOf(a.start) - minutesOf(b.start));
+  if(!slots.length) return 'day';
+  let pick = slots[slots.length - 1];          // before the first slot: last night's slot still runs
+  slots.forEach(sl => { if(minutesOf(sl.start) <= mins) pick = sl; });
+  return pick.theme;
 }
 
 function applyTheme(){
-  if(themeMode !== 'auto' && !THEMES[themeMode]) themeMode = 'auto';
+  if(themeMode !== 'auto' && !themeInfo(themeMode)) themeMode = 'auto';
   const active = themeMode === 'auto' ? computeAutoTheme() : themeMode;
-  document.body.classList.remove('theme-day', 'theme-evening', 'theme-night');
-  document.body.classList.add('theme-' + active);
+  const info = themeInfo(active) || themeInfo('day');
+  const body = document.body;
+  body.classList.remove('theme-day', 'theme-evening', 'theme-night', 'theme-custom', 'pal-day', 'pal-evening', 'pal-night');
+  if(info.builtin) body.classList.add('theme-' + active);
+  else {
+    body.classList.add('theme-custom');
+    if(['day', 'evening', 'night'].includes(info.bg.palette)) body.classList.add('pal-' + info.bg.palette);
+  }
+  activeTheme = info.builtin ? active : 'bg:' + info.bg.id;
   document.getElementById('themeToggle').innerHTML = themeMode === 'auto'
-    ? THEME_ICONS.auto + '<span>auto · ' + THEMES[active].label + '</span>'
-    : THEME_ICONS[active] + '<span>' + THEMES[active].label + '</span>';
-  document.getElementById('placeName').textContent = '· ' + THEMES[active].place;
-  document.getElementById('placeName').classList.toggle('clickable', active === 'evening');
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', THEMES[active].bar);
+    ? THEME_ICONS.auto + '<span><span class="tt-auto">auto · </span>' + escapeHtml(info.short) + '</span>'
+    : info.icon + '<span>' + escapeHtml(info.short) + '</span>';
+  document.getElementById('placeName').textContent = '· ' + info.place;
+  document.getElementById('placeName').classList.toggle('clickable', activeTheme === 'evening');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', info.bar);
+  showCustomBackground(info.builtin ? null : info.bg);
+  applyDeviceLook();
 }
 
 function loadTheme(){
@@ -1561,13 +1848,59 @@ function loadTheme(){
   } catch(e){ /* default to auto */ }
   applyTheme();
 }
-
-function cycleTheme(){
-  const order = ['auto', 'day', 'evening', 'night'];
-  themeMode = order[(order.indexOf(themeMode) + 1) % order.length];
+function setThemeMode(mode){
+  themeMode = mode;
   applyTheme();
   try{ localStorage.setItem(THEME_KEY, themeMode); } catch(e){}
 }
+function cycleTheme(){
+  const order = ['auto'].concat(allThemeIds());
+  setThemeMode(order[(order.indexOf(themeMode) + 1) % order.length]);
+  if(typeof currentTab !== 'undefined' && currentTab === 'settings') rebuildSection('look');
+}
+
+// custom background layer
+let shownBgId = null;
+async function showCustomBackground(bg){
+  const layer = document.querySelector('.scene-custom');
+  if(!layer) return;
+  const img = layer.querySelector('img'), vid = layer.querySelector('video');
+  if(!bg){ shownBgId = null; vid.pause(); return; }
+  layer.style.setProperty('--cbg-fit', bg.fit === 'contain' ? 'contain' : 'cover');
+  if(shownBgId === bg.id){ syncVideoPlayback(); return; }
+  shownBgId = bg.id;
+  const url = await bgUrl(bg.id);
+  if(shownBgId !== bg.id) return;
+  layer.classList.toggle('missing', !url);
+  if(!url){ img.classList.add('hidden'); vid.classList.add('hidden'); return; }
+  if(bg.kind === 'video'){
+    img.classList.add('hidden'); img.removeAttribute('src');
+    vid.src = url; vid.classList.remove('hidden');
+    syncVideoPlayback();
+  } else {
+    vid.pause(); vid.removeAttribute('src'); vid.load(); vid.classList.add('hidden');
+    img.src = url; img.classList.remove('hidden');
+  }
+}
+function syncVideoPlayback(){
+  const vid = document.querySelector('.scene-custom video');
+  if(!vid || vid.classList.contains('hidden') || !vid.getAttribute('src')) return;
+  const play = document.body.classList.contains('theme-custom') && DEV.motion !== 'off' && !reduceMotion() && document.visibilityState === 'visible';
+  if(play) vid.play().catch(() => {}); else vid.pause();
+}
+function applyDeviceLook(){
+  const b = document.body;
+  b.classList.toggle('motion-calm', DEV.motion === 'calm');
+  b.classList.toggle('motion-off', DEV.motion === 'off');
+  b.classList.toggle('no-egg', !DEV.easterEgg);
+  b.style.setProperty('--bg-dim', String(Number(DEV.dim) || 0));
+  if(DEV.cardAlpha === null || DEV.cardAlpha === undefined || DEV.cardAlpha === '') b.style.removeProperty('--card-alpha');
+  else b.style.setProperty('--card-alpha', String(DEV.cardAlpha));
+  if(DEV.accent) b.style.setProperty('--amber', DEV.accent); else b.style.removeProperty('--amber');
+  b.style.setProperty('--ui-zoom', String({small: .92, normal: 1, large: 1.1}[DEV.textSize] || 1));
+  syncVideoPlayback();
+}
+document.addEventListener('visibilitychange', syncVideoPlayback);
 
 document.getElementById('themeToggle').addEventListener('click', cycleTheme);
 loadTheme();
@@ -1580,7 +1913,7 @@ const CATS = {
   speed: {label:'Speed', color:'#4a63ff'},
   flex: {label:'Flexibility', color:'#ffb020'}
 };
-const ARC_START = '2026-10-01';
+let ARC_START = '2026-10-01';
 const ARC_MONTHS = [
   {label:'OCT', days:31},
   {label:'NOV', days:30},
@@ -1588,18 +1921,164 @@ const ARC_MONTHS = [
   {label:'JAN', days:31},
   {label:'FEB', days:28}
 ];
-const ARC_TOTAL_DAYS = ARC_MONTHS.reduce((s,m) => s + m.days, 0);
-const NUTRIENTS = {
-  protein: 'Protein',
-  creatine: 'Creatine',
-  b12: 'B12',
-  vitc: 'Vitamin C',
-  magnesium: 'Magnesium'
+let ARC_TOTAL_DAYS = ARC_MONTHS.reduce((s,m) => s + m.days, 0);
+// ===== Synced settings (saved in the log, so they follow you to every device) =====
+const SETTINGS_DEFAULTS = {
+  profile: {name: 'captain', topLabel: 'winter arc', quotes: [], quoteMode: 'builtin', moods: ['Rough', 'Meh', 'Okay', 'Good', 'Great']},
+  challenge: {name: 'Winter Arc', start: '2026-10-01', end: '2027-02-28', dayStart: 0, weekStart: 'mon', dateFormat: 'mdy'},
+  layout: {order: ['quote', 'week', 'workout', 'nutrients', 'water', 'sleep', 'weight', 'school', 'checkin', 'dailylog'], hidden: {}, firstTab: 'last'},
+  categories: {
+    strength: {label: 'Strength', color: '#e5484d'}, endurance: {label: 'Endurance', color: '#48c78e'},
+    speed: {label: 'Speed', color: '#4a63ff'}, flex: {label: 'Flexibility', color: '#ffb020'}
+  },
+  stats: {perLevel: 50},
+  nutrients: {xp: 5, names: {}, removed: []},
+  water: {xp: 5, glassSize: 250, unit: 'ml'},
+  sleep: {target: 8, mode: 'target', xp: 5},
+  weight: {unit: 'kg', goal: null, xp: 5},
+  xp: {perLevel: 100, checkin: 5},
+  rules: {
+    success: ['workout', 'nutrients', 'sleep'], need: 2,
+    core: ['protein', 'creatine', 'b12', 'vitc', 'magnesium'],
+    perfect: ['workout', 'nutrients', 'school', 'sleep', 'water', 'checkin']
+  },
+  badges: {enabled: true, popups: true, targets: {}}
 };
+const NUTRIENTS = {protein: 'Protein', creatine: 'Creatine', b12: 'B12', vitc: 'Vitamin C', magnesium: 'Magnesium'};
+let SET = cloneJSON(SETTINGS_DEFAULTS);
+
+function isPlainObject(v){ return v && typeof v === 'object' && !Array.isArray(v); }
+function deepMerge(base, over){
+  const out = cloneJSON(base);
+  if(!isPlainObject(over)) return out;
+  Object.keys(over).forEach(k => {
+    if(isPlainObject(out[k]) && isPlainObject(over[k])) out[k] = deepMerge(out[k], over[k]);
+    else if(over[k] !== undefined) out[k] = cloneJSON(over[k]);
+  });
+  return out;
+}
+function validISO(s){ return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')) && !isNaN(dateFromISO(s)); }
+const numOr = (v, d, lo, hi) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+
+// Recompute everything that depends on settings. Called after loading and after every change.
+function refreshSettings(){
+  SET = deepMerge(SETTINGS_DEFAULTS, (state && state.settings) || {});
+  const c = SET.challenge;
+  if(!validISO(c.start)) c.start = SETTINGS_DEFAULTS.challenge.start;
+  if(!validISO(c.end) || c.end < c.start) c.end = addDaysISO(c.start, 150);
+  if(daysBetween(c.start, c.end) > 1100) c.end = addDaysISO(c.start, 1100);
+  ARC_START = c.start;
+  ARC_TOTAL_DAYS = daysBetween(c.start, c.end) + 1;
+  c.dayStart = numOr(c.dayStart, 0, 0, 6);
+  Object.keys(CATS).forEach(k => {
+    const cat = SET.categories[k] || SETTINGS_DEFAULTS.categories[k];
+    CATS[k].label = String(cat.label || SETTINGS_DEFAULTS.categories[k].label).slice(0, 24);
+    CATS[k].color = /^#[0-9a-f]{6}$/i.test(cat.color) ? cat.color : SETTINGS_DEFAULTS.categories[k].color;
+  });
+  MOODS = SETTINGS_DEFAULTS.profile.moods.map((d, i) => String((SET.profile.moods || [])[i] || '').trim().slice(0, 14) || d);
+  SET.xp.perLevel = numOr(SET.xp.perLevel, 100, 10, 100000);
+  SET.stats.perLevel = numOr(SET.stats.perLevel, 50, 5, 100000);
+  SET.sleep.target = numOr(SET.sleep.target, 8, 1, 14);
+  SET.water.glassSize = numOr(SET.water.glassSize, 250, 1, 5000);
+  ['xp'].forEach(k => { SET.nutrients[k] = numOr(SET.nutrients[k], 5, 0, 1000); SET.water[k] = numOr(SET.water[k], 5, 0, 1000); SET.sleep[k] = numOr(SET.sleep[k], 5, 0, 1000); SET.weight[k] = numOr(SET.weight[k], 5, 0, 1000); });
+  SET.xp.checkin = numOr(SET.xp.checkin, 5, 0, 1000);
+  if(!Array.isArray(SET.rules.success)) SET.rules.success = SETTINGS_DEFAULTS.rules.success.slice();
+  SET.rules.need = numOr(SET.rules.need, 2, 1, Math.max(1, SET.rules.success.length));
+  if(!Array.isArray(SET.layout.order)) SET.layout.order = SETTINGS_DEFAULTS.layout.order.slice();
+  SETTINGS_DEFAULTS.layout.order.forEach(k => { if(!SET.layout.order.includes(k)) SET.layout.order.push(k); });
+}
+
 function getNutrientDefinitions(){
-  const custom = {};
-  (state?.customNutrients || []).forEach(item => { custom[item.id] = item.name; });
-  return {...NUTRIENTS, ...custom};
+  const defs = {};
+  const removed = (SET.nutrients && SET.nutrients.removed) || [];
+  const names = (SET.nutrients && SET.nutrients.names) || {};
+  Object.keys(NUTRIENTS).forEach(k => { if(!removed.includes(k)) defs[k] = String(names[k] || NUTRIENTS[k]); });
+  (state?.customNutrients || []).forEach(item => { defs[item.id] = item.name; });
+  return defs;
+}
+
+// ----- rule helpers -----
+const SUCCESS_HABITS = {
+  workout:   {label: 'Workout', text: 'tick at least one workout quest'},
+  nutrients: {label: 'Core nutrients', text: 'take all your core nutrients'},
+  sleep:     {label: 'Sleep logged', text: 'log your bedtime and wake-up time'},
+  sleepGoal: {label: 'Sleep target', text: 'sleep your target hours'},
+  water:     {label: 'Water goal', text: 'hit your water goal'},
+  checkin:   {label: 'Check-in', text: 'do the daily check-in'},
+  school:    {label: 'School goal', text: 'finish at least one school goal'},
+  weight:    {label: 'Weight logged', text: 'log your weight'}
+};
+const PERFECT_SECTIONS = {
+  workout: 'all workout quests', nutrients: 'all nutrients', school: 'all school goals', sleep: 'your sleep',
+  water: 'your water goal', checkin: 'the daily check-in', weight: 'a weight log'
+};
+function sleepLogged(dl){ return !!(dl && dl.sleep && dl.sleep.bed && dl.sleep.wake); }
+function sleepTargetMet(dl){ return sleepLogged(dl) && computeSleepHours(dl.sleep.bed, dl.sleep.wake) >= SET.sleep.target; }
+function sleepDone(dl){ return SET.sleep.mode === 'logged' ? sleepLogged(dl) : sleepTargetMet(dl); }
+function coreNutrientIds(){
+  const defs = getNutrientDefinitions();
+  return (SET.rules.core || []).filter(k => k in defs);
+}
+function successHabitDone(h, dl){
+  switch(h){
+    case 'workout': return (dl.quests || []).length > 0;
+    case 'nutrients': { const core = coreNutrientIds(); return core.length > 0 && core.every(k => dl.nutrients && dl.nutrients[k]); }
+    case 'sleep': return sleepLogged(dl);
+    case 'sleepGoal': return sleepTargetMet(dl);
+    case 'water': return (Number(dl.water) || 0) >= waterGoal();
+    case 'checkin': return !!dl.mood;
+    case 'school': return (dl.schoolGoals || []).length > 0;
+    case 'weight': return dl.weight !== null && dl.weight !== undefined;
+  }
+  return false;
+}
+function listText(parts){ return parts.length < 2 ? (parts[0] || '') : parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1]; }
+function sleepGoalText(){ return SET.sleep.mode === 'logged' ? 'logging your sleep' : SET.sleep.target + '+ hours of sleep'; }
+function successRuleText(){
+  const hs = SET.rules.success.filter(h => SUCCESS_HABITS[h]);
+  if(!hs.length) return 'Right now no habits count toward a successful day, so pick some in Settings.';
+  const need = Math.min(SET.rules.need, hs.length);
+  const txt = hs.map(h => SUCCESS_HABITS[h].text);
+  if(hs.length === 1) return 'A day is successful when you ' + txt[0] + '.';
+  if(need === hs.length) return 'A day is successful when you do all of these: ' + listText(txt) + '.';
+  return 'A day is successful when you hit at least ' + need + ' of these ' + hs.length + ': ' + listText(txt) + '.';
+}
+function perfectRuleText(){
+  const ps = SET.rules.perfect.filter(p => PERFECT_SECTIONS[p]).map(p => p === 'sleep' ? sleepGoalText() : PERFECT_SECTIONS[p]);
+  return 'A perfect day means everything on this list is done: ' + listText(ps) + '. The ring at the top hits 100% when you get there.';
+}
+function xpRuleText(){
+  return 'Every ' + SET.xp.perLevel.toLocaleString('en-US') + ' XP is one level. You earn XP by completing goals: workout quests and school goals give the XP shown next to them, a finished subject gives its bonus, each nutrient gives ' + SET.nutrients.xp +
+    ', the water goal ' + SET.water.xp + ', ' + sleepGoalText() + ' ' + SET.sleep.xp + ', a weight log ' + SET.weight.xp + ' and the check-in ' + SET.xp.checkin + ' XP.';
+}
+
+// ----- units & dates -----
+const LB_PER_KG = 2.20462;
+function wUnit(){ return SET.weight.unit === 'lb' ? 'lb' : 'kg'; }
+function wShow(kg){ const v = Number(kg) * (wUnit() === 'lb' ? LB_PER_KG : 1); return Math.round(v * 10) / 10; }
+function wToKg(v){ return wUnit() === 'lb' ? Number(v) / LB_PER_KG : Number(v); }
+function waterAmount(glasses){
+  const total = glasses * SET.water.glassSize;
+  if(SET.water.unit === 'oz') return Math.round(total * 10) / 10 + ' oz';
+  return total >= 1000 ? (Math.round(total / 10) / 100) + ' L' : Math.round(total) + ' ml';
+}
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function fmtDate(ds, fmt){
+  if(!validISO(ds)) return String(ds || '');
+  const [y, m, d] = ds.split('-').map(Number);
+  switch(fmt || SET.challenge.dateFormat){
+    case 'dmy': return d + '/' + m + '/' + y;
+    case 'dmon': return d + ' ' + MONTHS_SHORT[m - 1] + ' ' + y;
+    case 'iso': return ds;
+    default: return m + '/' + d + '/' + y;
+  }
+}
+function weekOffset(ds){ const wd = dateFromISO(ds).getUTCDay(); return SET.challenge.weekStart === 'sun' ? wd : (wd + 6) % 7; }
+function quotePool(){
+  const mine = (SET.profile.quotes || []).map(q => String(q).trim()).filter(Boolean);
+  if(SET.profile.quoteMode === 'mine' && mine.length) return mine;
+  if(SET.profile.quoteMode === 'both' && mine.length) return DAILY_LINES.concat(mine);
+  return DAILY_LINES;
 }
 
 // Pure UTC date-string arithmetic. Never construct a Date from a date-only
@@ -1627,7 +2106,7 @@ let state = null;
 // The viewer's LOCAL calendar date. toISOString() would give the UTC date,
 // which rolls the day over at 1–2am in Europe instead of at midnight.
 function todayStr(){
-  const d = new Date();
+  const d = new Date(Date.now() - (SET.challenge.dayStart || 0) * 3600000);   // 'new day starts at' setting
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
@@ -1679,6 +2158,8 @@ function getDayLog(dateStr){
 }
 
 function migrateState(){
+  if(state.settings !== undefined && !isPlainObject(state.settings)) delete state.settings;
+  refreshSettings();
   if(!state.dailyLogs) state.dailyLogs = {};
   if(!state.goalHistory) state.goalHistory = {};
   if(!Array.isArray(state.customNutrients)) state.customNutrients = [];
@@ -1702,7 +2183,7 @@ function migrateState(){
   if(!state.badges || typeof state.badges !== 'object'){
     state.badges = {};
     const st = computeStats();
-    BADGES.forEach(b => { if(b.value(st) >= b.goal) state.badges[b.id] = todayStr(); });
+    BADGES.forEach(b => { if(b.value(st) >= badgeGoal(b)) state.badges[b.id] = todayStr(); });
   }
 }
 
@@ -1713,12 +2194,10 @@ function dayIsFinished(dateStr){
 function dayIsSuccessful(dateStr){
   const dl = state.dailyLogs[dateStr];
   if(!dl) return false;
-  let score = 0;
-  if(dl.quests && dl.quests.length > 0) score++;
-  const n = dl.nutrients;
-  if(n && n.protein && n.creatine && n.b12 && n.vitc && n.magnesium) score++;
-  if(dl.sleep && dl.sleep.bed && dl.sleep.wake) score++;
-  return score >= 2;
+  const hs = SET.rules.success.filter(h => SUCCESS_HABITS[h]);
+  if(!hs.length) return false;
+  const need = Math.min(SET.rules.need, hs.length);
+  return hs.filter(h => successHabitDone(h, dl)).length >= need;
 }
 
 function computeStreak(){
@@ -1813,6 +2292,7 @@ async function loadState(){
   else if(cloudOK){ writeCache(false); setSyncStatus('saved ✓'); }
   else setSyncStatus(cached ? 'offline — showing this device\'s copy' : 'offline — nothing saved yet', true);
   render();
+  applyFirstTab();
 }
 
 async function saveState(){
@@ -1916,13 +2396,14 @@ function daysBetween(a, b){
 }
 
 function levelFromXP(xp){
-  const level = Math.floor(xp / 100) + 1;
-  const into = xp % 100;
+  const per = SET.xp.perLevel;
+  const level = Math.floor(xp / per) + 1;
+  const into = xp % per;
   return {level, into};
 }
 
 function statLevel(xp){
-  return Math.floor(xp / 50) + 1;
+  return Math.floor(xp / SET.stats.perLevel) + 1;
 }
 
 function render(){
@@ -1938,20 +2419,19 @@ function render(){
     dayCountEl.textContent = 'Day ' + dayNum + ' / ' + ARC_TOTAL_DAYS;
   }
   if(editingText !== 'customGreeting') document.getElementById('greeting').textContent = customText('customGreeting') || greetingText();
-  if(editingText !== 'customQuote') document.getElementById('dailyLine').textContent = customText('customQuote') || DAILY_LINES[((dayNum % DAILY_LINES.length) + DAILY_LINES.length) % DAILY_LINES.length];
+  if(editingText !== 'customQuote') { const pool = quotePool(); document.getElementById('dailyLine').textContent = customText('customQuote') || pool[((dayNum % pool.length) + pool.length) % pool.length]; }
   renderTodayRing(today);
   renderWeekStrip();
 
   const {level, into} = levelFromXP(state.totalXP);
   document.getElementById('levelBadge').textContent = 'LV. ' + level;
-  document.getElementById('xpFill').style.width = into + '%';
-  document.getElementById('xpLabel').textContent = into + ' / 100 XP · ' + state.totalXP + ' total';
+  document.getElementById('xpFill').style.width = (into / SET.xp.perLevel * 100) + '%';
+  document.getElementById('xpLabel').textContent = into.toLocaleString('en-US') + ' / ' + SET.xp.perLevel.toLocaleString('en-US') + ' XP · ' + state.totalXP.toLocaleString('en-US') + ' total';
   const curStreak = computeStreak();
   document.getElementById('streakBadge').textContent = curStreak + ' day streak';
   document.getElementById('streakBadge').title = 'Best streak: ' + bestStreak() + ' days';
-  document.getElementById('startNote').textContent = 'Winter Arc: ' + ARC_START + ' → ' + arcEndDate();
-  const now = new Date();
-  document.getElementById('arcProgressDateLabel').textContent = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+  document.getElementById('startNote').textContent = SET.challenge.name + ': ' + fmtDate(ARC_START) + ' → ' + fmtDate(arcEndDate());
+  document.getElementById('arcProgressDateLabel').textContent = fmtDate(today);
 
   // Stats grid
   const statsGrid = document.getElementById('statsGrid');
@@ -1959,8 +2439,8 @@ function render(){
   Object.keys(CATS).forEach(key => {
     const xp = state.stats[key] || 0;
     const lvl = statLevel(xp);
-    const into = xp % 50;
-    const pct = (into / 50) * 100;
+    const into = xp % SET.stats.perLevel;
+    const pct = (into / SET.stats.perLevel) * 100;
     const card = document.createElement('div');
     card.className = 'stat-card';
     card.style.setProperty('--stat-color', CATS[key].color);
@@ -2013,7 +2493,7 @@ function render(){
       <div class="quest-check ${done ? 'checked' : ''}" data-nut="${key}">${done ? '✓' : ''}</div>
       <div class="quest-text ${done ? 'checked' : ''}">${escapeHtml(nutrientDefinitions[key])}</div>
       ${streakChip(habitStreak(dl => !!(dl.nutrients || {})[key]))}
-      <div class="quest-xp">+5xp</div>
+      <div class="quest-xp">+${SET.nutrients.xp}xp</div>
       <button class="quest-del" type="button" data-clearnut="${key}" aria-label="Clear ${escapeHtml(nutrientDefinitions[key])} for today" title="Clear today's entry">×</button>
     `;
     nutList.appendChild(row);
@@ -2027,20 +2507,22 @@ function render(){
   const avgText = avgSleep ? ' · 7-day avg ' + avgSleep.toFixed(1) + ' hrs' : '';
   if(todayLog.sleep.bed && todayLog.sleep.wake){
     const hrs = computeSleepHours(todayLog.sleep.bed, todayLog.sleep.wake);
-    sleepInfo.textContent = hrs.toFixed(1) + ' hrs logged' + (hrs >= 8 ? ' · 8h goal reached ✓' : ' · ' + (8 - hrs).toFixed(1) + ' hrs short of 8h') + avgText;
+    const tgt = SET.sleep.target;
+    sleepInfo.textContent = hrs.toFixed(1) + ' hrs logged' + (hrs >= tgt ? ' · ' + tgt + 'h goal reached ✓' : ' · ' + (tgt - hrs).toFixed(1) + ' hrs short of ' + tgt + 'h') + avgText;
   } else {
     sleepInfo.textContent = 'Not logged yet' + avgText;
   }
-  const sleepStreak = habitStreak(dl => !!(dl.sleep && dl.sleep.bed && dl.sleep.wake && computeSleepHours(dl.sleep.bed, dl.sleep.wake) >= 8));
-  document.getElementById('sleepStreak').textContent = sleepStreak >= 2 ? sleepStreak + ' nights of 8h+ in a row' : '';
+  const sleepStreak = habitStreak(sleepDone);
+  document.getElementById('sleepStreak').textContent = sleepStreak >= 2 ? sleepStreak + (SET.sleep.mode === 'logged' ? ' nights logged in a row' : ' nights of ' + SET.sleep.target + 'h+ in a row') : '';
   renderWater(todayLog);
   renderCheckin(todayLog);
 
   // Weight
-  document.getElementById('weightInput').value = (todayLog.weight !== null && todayLog.weight !== undefined) ? todayLog.weight : '';
+  const wInput = document.getElementById('weightInput');
+  if(document.activeElement !== wInput) wInput.value = (todayLog.weight !== null && todayLog.weight !== undefined) ? wShow(todayLog.weight) : '';
   document.getElementById('weightLogStatus').textContent = todayLog.weightLogEmpty
     ? 'Logged without a value: 0 XP. Included in Log History.'
-    : '';
+    : weightGoalText();
   const weightList = document.getElementById('weightList');
   const weightDates = Object.keys(state.dailyLogs)
     .filter(d => state.dailyLogs[d].weight !== null && state.dailyLogs[d].weight !== undefined)
@@ -2054,9 +2536,9 @@ function render(){
       row.className = 'log-entry';
       // change vs. the previous logged weigh-in (list is newest first)
       const prev = weightDates[i + 1];
-      const delta = prev ? Number(state.dailyLogs[d].weight) - Number(state.dailyLogs[prev].weight) : null;
+      const delta = prev ? wShow(state.dailyLogs[d].weight) - wShow(state.dailyLogs[prev].weight) : null;
       const deltaText = delta === null || !Number.isFinite(delta) ? '' : (delta > 0 ? '+' : delta < 0 ? '−' : '±') + Math.abs(delta).toFixed(1);
-      row.innerHTML = `<div class="le-main"><span>${d}</span>${deltaText ? `<span class="le-date">${deltaText} kg</span>` : ''}</div><span class="le-val">${escapeHtml(String(state.dailyLogs[d].weight))} kg</span>`;
+      row.innerHTML = `<div class="le-main"><span>${fmtDate(d)}</span>${deltaText ? `<span class="le-date">${deltaText} ${wUnit()}</span>` : ''}</div><span class="le-val">${escapeHtml(String(wShow(state.dailyLogs[d].weight)))} ${wUnit()}</span>`;
       weightList.appendChild(row);
     });
   }
@@ -2087,6 +2569,7 @@ function render(){
   document.getElementById('dailyLogStatus').textContent = loggedToday
     ? 'Today is logged. You can update it until the day ends.'
     : 'Not logged yet.';
+  applySyncedLook();
   if(currentTab === 'insights') renderInsights();
   if(currentTab === 'badges') renderBadges();
   if(popSelector){
@@ -2285,7 +2768,7 @@ async function toggleNutrient(key){
   const done = !!dl.nutrients[key];
   const item = collectDailyGoals().find(x => x.id === 'nutrient:' + key);
   if(item) await saveDailySnapshot([item]); else { await saveState(); render(); }
-  showLogToast((done ? 'Nutrient logged' : 'Nutrient unchecked') + ' · ' + (done ? 5 : 0) + ' XP');
+  showLogToast((done ? 'Nutrient logged' : 'Nutrient unchecked') + ' · ' + (done ? SET.nutrients.xp : 0) + ' XP');
 }
 
 async function saveSleep(){
@@ -2304,11 +2787,11 @@ async function logWeight(){
   if(raw === '' || !Number.isFinite(val)){
     dl.weightLogEmpty = true;
   } else {
-    dl.weight = val;
+    dl.weight = Math.round(wToKg(val) * 1000) / 1000;   // always stored in kg
     dl.weightLogEmpty = false;
   }
   await saveDailySnapshot([collectDailyGoals().find(item => item.id === 'weight')]);
-  showLogToast(raw === '' || !Number.isFinite(val) ? 'Weight logged · No value entered · 0 XP' : 'Weight logged · ' + val + ' kg · 5 XP');
+  showLogToast(raw === '' || !Number.isFinite(val) ? 'Weight logged · No value entered · 0 XP' : 'Weight logged · ' + val + ' ' + wUnit() + ' · ' + SET.weight.xp + ' XP');
 }
 
 async function addSubject(){
@@ -2368,6 +2851,7 @@ async function deleteTopic(topicId){
 }
 
 function showLogToast(message){
+  if(!DEV.xpPopups) return;
   const stack = document.getElementById('logToast');
   if(!stack) return;
   const match = String(message).match(/(?:·|\s)(-?\d+)\s*XP/i);
@@ -2412,15 +2896,15 @@ function collectDailyGoals(){
   state.questTemplates.forEach(q => items.push({id:'quest:'+q.id, name:q.text, category:CATS[q.cat]?.label || q.cat, done:dl.quests.includes(q.id), xp:Math.max(0, Number(q.xp)||0)}));
   state.subjects.forEach(subject => subject.topics.forEach(t => items.push({id:'school:'+subject.id+':'+t.id, name:t.text, category:'School · '+subject.name, done:dl.schoolGoals.includes(t.id), xp:Math.max(0, Number(t.xp ?? 10)||0)})));
   const nutrientDefinitions = getNutrientDefinitions();
-  Object.keys(nutrientDefinitions).forEach(key => items.push({id:'nutrient:'+key, name:nutrientDefinitions[key], category:'Nutrients', done:!!dl.nutrients[key], xp:5}));
+  Object.keys(nutrientDefinitions).forEach(key => items.push({id:'nutrient:'+key, name:nutrientDefinitions[key], category:'Nutrients', done:!!dl.nutrients[key], xp:SET.nutrients.xp}));
   const sleepTimesEntered = !!(dl.sleep.bed && dl.sleep.wake);
   const sleepHours = sleepTimesEntered ? computeSleepHours(dl.sleep.bed, dl.sleep.wake) : 0;
-  items.push({id:'sleep', name:'Sleep schedule', category:'Sleep', done:sleepTimesEntered && sleepHours >= 8, detail:sleepTimesEntered ? dl.sleep.bed+'–'+dl.sleep.wake+' ('+sleepHours.toFixed(1)+' hrs)' : 'Not logged', xp:5});
+  items.push({id:'sleep', name:'Sleep schedule', category:'Sleep', done:sleepDone(dl), detail:sleepTimesEntered ? dl.sleep.bed+'–'+dl.sleep.wake+' ('+sleepHours.toFixed(1)+' hrs)' : 'Not logged', xp:SET.sleep.xp});
   const water = Number(dl.water) || 0;
-  items.push({id:'water', name:'Water', category:'Water', done:water >= waterGoal(), detail:water + ' / ' + waterGoal() + ' glasses', xp:5});
+  items.push({id:'water', name:'Water', category:'Water', done:water >= waterGoal(), detail:water + ' / ' + waterGoal() + ' glasses', xp:SET.water.xp});
   const mood = MOODS[(dl.mood || 0) - 1];
-  items.push({id:'checkin', name:'Daily check-in', category:'Check-in', done:!!mood, detail:mood ? mood + (dl.note ? ' — ' + dl.note : '') : (dl.note ? dl.note : 'Not checked in'), xp:5});
-  items.push({id:'weight', name:'Weight', category:'Weight', done:dl.weight !== null && dl.weight !== undefined, detail:dl.weight !== null && dl.weight !== undefined ? dl.weight+' kg' : (dl.weightLogEmpty ? 'No value entered' : 'Not logged'), xp:5});
+  items.push({id:'checkin', name:'Daily check-in', category:'Check-in', done:!!mood, detail:mood ? mood + (dl.note ? ' — ' + dl.note : '') : (dl.note ? dl.note : 'Not checked in'), xp:SET.xp.checkin});
+  items.push({id:'weight', name:'Weight', category:'Weight', done:dl.weight !== null && dl.weight !== undefined, detail:dl.weight !== null && dl.weight !== undefined ? wShow(dl.weight)+' '+wUnit() : (dl.weightLogEmpty ? 'No value entered' : 'Not logged'), xp:SET.weight.xp});
   const todaysTrainingLogs = state.logs
     .map((log, index) => ({log, index}))
     .filter(item => item.log.date === date);
@@ -2556,7 +3040,7 @@ function renderGoalHistory(){
     const total = (log.entries || []).reduce((sum,e) => sum + (Number(e.xpEarned)||0), 0);
     const summary = document.createElement('summary');
     summary.style.cssText = 'cursor:pointer;display:flex;justify-content:space-between;gap:12px;font-size:13px;';
-    summary.innerHTML = `<span>${date}${date === todayStr() ? ' · Today' : ' · Locked'}</span><span class="quest-xp">+${total} XP</span>`;
+    summary.innerHTML = `<span>${fmtDate(date)}${date === todayStr() ? ' · Today' : ' · Locked'}</span><span class="quest-xp">+${total} XP</span>`;
     wrap.appendChild(summary);
     const entries = log.entries || [];
     const categoryGroups = [
@@ -2615,7 +3099,10 @@ function renderGoalHistory(){
 
 async function resetAll(){
   if(!confirm('This will erase all training progress. Are you sure?')) return;
+  const keep = state && state.settings;    // progress only: your settings stay
   state = defaultState();
+  if(keep) state.settings = keep;
+  refreshSettings();
   await saveState();
   render();
 }
@@ -2638,19 +3125,32 @@ const DAILY_LINES = [
   'Hydrate, move, learn, rest. Repeat.',
   'Nobody remembers the easy days. Win the hard ones.'
 ];
-const MOODS = ['Rough', 'Meh', 'Okay', 'Good', 'Great'];
+let MOODS = ['Rough', 'Meh', 'Okay', 'Good', 'Great'];
 
 function greetingText(){
   const h = new Date().getHours();
-  if(h < 5 || h >= 22) return 'Still up, captain?';
-  if(h < 12) return 'Good morning, captain';
-  if(h < 17) return 'Good afternoon, captain';
-  return 'Good evening, captain';
+  const name = String(SET.profile.name || '').trim();
+  const n = name ? ', ' + name : '';
+  if(h < 5 || h >= 22) return 'Still up' + n + '?';
+  if(h < 12) return 'Good morning' + n;
+  if(h < 17) return 'Good afternoon' + n;
+  return 'Good evening' + n;
+}
+function weightGoalText(){
+  const goal = SET.weight.goal;
+  if(goal === null || goal === undefined || !(Number(goal) > 0)) return '';
+  const ds = Object.keys(state.dailyLogs).sort().filter(d => { const v = state.dailyLogs[d].weight; return v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v)); });
+  if(!ds.length) return 'Goal: ' + wShow(goal) + ' ' + wUnit();
+  const first = Number(state.dailyLogs[ds[0]].weight), last = Number(state.dailyLogs[ds[ds.length - 1]].weight);
+  const losing = first >= goal;
+  const left = wShow(Math.abs(last - goal));
+  if((losing && last <= goal) || (!losing && last >= goal) || left === 0) return 'Goal of ' + wShow(goal) + ' ' + wUnit() + ' reached ✓';
+  return left + ' ' + wUnit() + ' to go to your goal of ' + wShow(goal) + ' ' + wUnit();
 }
 function shortDate(ds){ return dateFromISO(ds).toLocaleDateString('en-US', {month:'short', day:'numeric', timeZone:'UTC'}); }
 function longDate(ds){ return dateFromISO(ds).toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', timeZone:'UTC'}); }
 function waterGoal(){ return Math.max(1, Math.min(20, parseInt(state.waterGoal, 10) || 8)); }
-function sleptEight(dl){ return !!(dl.sleep && dl.sleep.bed && dl.sleep.wake && computeSleepHours(dl.sleep.bed, dl.sleep.wake) >= 8); }
+function sleptEight(dl){ return sleepTargetMet(dl); }
 
 function setBar(id, done, total){
   const el = document.getElementById(id);
@@ -2660,6 +3160,7 @@ function streakChip(n){
   return n >= 2 ? `<span class="streak-chip" title="${n} days in a row">${n}d</span>` : '';
 }
 function buzz(pattern){
+  if(!DEV.vibration) return;
   try{ if(navigator.vibrate) navigator.vibrate(pattern || 12); } catch(e){}
 }
 
@@ -2667,15 +3168,19 @@ function buzz(pattern){
 // heatmap) is the share of these done; school goals count toward the day too.
 function dailyHabitDefs(includeSchool){
   const defs = [];
-  state.questTemplates.forEach(q => defs.push({name:q.text, done:dl => (dl.quests || []).includes(q.id)}));
-  const nutrients = getNutrientDefinitions();
-  Object.keys(nutrients).forEach(k => defs.push({name:nutrients[k], done:dl => !!(dl.nutrients || {})[k]}));
-  if(includeSchool){
+  const P = new Set(SET.rules.perfect);
+  if(P.has('workout')) state.questTemplates.forEach(q => defs.push({name:q.text, done:dl => (dl.quests || []).includes(q.id)}));
+  if(P.has('nutrients')){
+    const nutrients = getNutrientDefinitions();
+    Object.keys(nutrients).forEach(k => defs.push({name:nutrients[k], done:dl => !!(dl.nutrients || {})[k]}));
+  }
+  if(includeSchool && P.has('school')){
     state.subjects.forEach(s => s.topics.forEach(t => defs.push({name:t.text, done:dl => (dl.schoolGoals || []).includes(t.id)})));
   }
-  defs.push({name:'Sleep 8h+', done:sleptEight});
-  defs.push({name:'Water goal', done:dl => (Number(dl.water) || 0) >= waterGoal()});
-  defs.push({name:'Check-in', done:dl => !!dl.mood});
+  if(P.has('sleep')) defs.push({name:SET.sleep.mode === 'logged' ? 'Sleep logged' : 'Sleep ' + SET.sleep.target + 'h+', done:sleepDone});
+  if(P.has('water')) defs.push({name:'Water goal', done:dl => (Number(dl.water) || 0) >= waterGoal()});
+  if(P.has('checkin')) defs.push({name:'Check-in', done:dl => !!dl.mood});
+  if(P.has('weight')) defs.push({name:'Weight', done:dl => dl.weight !== null && dl.weight !== undefined});
   return defs;
 }
 function dayItems(ds){
@@ -2719,9 +3224,9 @@ function computeStats(){
     const dl = state.dailyLogs[ds];
     if(!dl) continue;
     const items = dayItems(ds);
-    if(items.length >= 3 && items.every(Boolean)) st.perfect++;
+    if(items.length > 0 && items.every(Boolean)) st.perfect++;
     if((Number(dl.water) || 0) >= waterGoal()) st.waterDays++;
-    if(sleptEight(dl)) st.sleepNights++;
+    if(sleepDone(dl)) st.sleepNights++;
     if(dl.mood) st.checkins++;
     st.workouts += (dl.quests || []).length;
     st.school += (dl.schoolGoals || []).length;
@@ -2744,7 +3249,7 @@ function renderTodayRing(today){
   ring.classList.toggle('zero', p === 0);
   ring.classList.toggle('full', p === 100);
   document.getElementById('todayPct').textContent = p + '%';
-  if(lastRing.day === today && lastRing.pct !== null && lastRing.pct < 1 && pct === 1 && items.length >= 3){
+  if(lastRing.day === today && lastRing.pct !== null && lastRing.pct < 1 && pct === 1 && items.length > 0){
     confetti();
     buzz([20, 40, 20]);
     showToast('', '<b>Perfect day!</b> Every goal done.');
@@ -2756,7 +3261,7 @@ function renderWeekStrip(){
   const root = document.getElementById('weekStrip');
   root.innerHTML = '';
   const today = todayStr();
-  const monday = addDaysISO(today, -((dateFromISO(today).getUTCDay() + 6) % 7));
+  const monday = addDaysISO(today, -weekOffset(today));   // first day of the week (Mon or Sun)
   for(let i = 0; i < 7; i++){
     const ds = addDaysISO(monday, i);
     const future = ds > today;
@@ -2768,7 +3273,7 @@ function renderWeekStrip(){
     btn.dataset.weekdate = ds;
     btn.disabled = future;
     btn.setAttribute('aria-label', longDate(ds) + (future ? '' : ': ' + p + '% done' + (win ? ', successful day' : '')));
-    btn.innerHTML = `<span class="wd">${'MTWTFSS'[i]}</span><span class="wring"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="ring-track" cx="18" cy="18" r="15"/><circle class="ring-fill${p === 0 ? ' zero' : ''}${p === 100 ? ' full' : ''}" cx="18" cy="18" r="15" pathLength="100" stroke-dasharray="${p} 100"/></svg><b>${Number(ds.slice(8))}</b></span>`;
+    btn.innerHTML = `<span class="wd">${(SET.challenge.weekStart === 'sun' ? 'SMTWTFS' : 'MTWTFSS')[i]}</span><span class="wring"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="ring-track" cx="18" cy="18" r="15"/><circle class="ring-fill${p === 0 ? ' zero' : ''}${p === 100 ? ' full' : ''}" cx="18" cy="18" r="15" pathLength="100" stroke-dasharray="${p} 100"/></svg><b>${Number(ds.slice(8))}</b></span>`;
     root.appendChild(btn);
   }
 }
@@ -2788,7 +3293,7 @@ function renderWater(dl){
     root.appendChild(g);
   }
   const st = habitStreak(d => (Number(d.water) || 0) >= goal);
-  document.getElementById('waterCount').textContent = n + ' / ' + goal + ' glasses' + (n >= goal ? ' ✓' : '') + (st >= 2 ? ' · ' + st + 'd streak' : '');
+  document.getElementById('waterCount').textContent = n + ' / ' + goal + ' glasses · ' + waterAmount(n) + (n >= goal ? ' ✓' : '') + (st >= 2 ? ' · ' + st + 'd streak' : '');
   const goalInput = document.getElementById('waterGoalInput');
   if(document.activeElement !== goalInput) goalInput.value = goal;
 }
@@ -2798,7 +3303,7 @@ async function setWater(n){
   const before = (Number(dl.water) || 0) >= goal;
   dl.water = Math.max(0, Math.min(30, n));
   await saveDailySnapshot([collectDailyGoals().find(x => x.id === 'water')]);
-  if(!before && dl.water >= goal) showLogToast('Water goal reached · 5 XP');
+  if(!before && dl.water >= goal) showLogToast('Water goal reached · ' + SET.water.xp + ' XP');
 }
 async function setWaterGoal(){
   const input = document.getElementById('waterGoalInput');
@@ -2823,7 +3328,7 @@ function renderCheckin(dl){
   const note = document.getElementById('checkinNote');
   if(document.activeElement !== note) note.value = dl.note || '';
   const st = habitStreak(d => !!d.mood);
-  document.getElementById('checkinCount').textContent = dl.mood ? 'checked in ✓' + (st >= 2 ? ' · ' + st + 'd streak' : '') : '+5xp';
+  document.getElementById('checkinCount').textContent = dl.mood ? 'checked in ✓' + (st >= 2 ? ' · ' + st + 'd streak' : '') : '+' + SET.xp.checkin + 'xp';
 }
 async function setMood(m){
   const dl = getDayLog(todayStr());
@@ -2831,7 +3336,7 @@ async function setMood(m){
   dl.mood = dl.mood === m ? null : m;   // tap the active mood again to clear it
   dl.note = document.getElementById('checkinNote').value.trim();
   await saveDailySnapshot([collectDailyGoals().find(x => x.id === 'checkin')]);
-  if(!was && dl.mood) showLogToast('Checked in · 5 XP');
+  if(!was && dl.mood) showLogToast('Checked in · ' + SET.xp.checkin + ' XP');
 }
 async function saveNote(){
   const dl = getDayLog(todayStr());
@@ -2843,20 +3348,27 @@ async function saveNote(){
 
 // ----- Tabs -----
 const TAB_KEY = 'training-log-tab';
-const TABS = ['today', 'insights', 'badges'];
+const TABS = ['today', 'insights', 'badges', 'settings'];
 let currentTab = 'today';
 let popSelector = null;
 function showTab(name, keepScroll){
   if(!TABS.includes(name)) name = 'today';
+  if(name === 'badges' && !SET.badges.enabled) name = 'today';
+  if(name !== 'settings') lastMainTab = name;
   currentTab = name;
   TABS.forEach(t => {
     document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
     const btn = document.querySelector('.bottom-nav [data-tab="' + t + '"]');
+    if(!btn) return;
     btn.classList.toggle('active', t === name);
     btn.setAttribute('aria-current', t === name ? 'page' : 'false');
   });
-  try{ localStorage.setItem(TAB_KEY, name); } catch(e){}
+  const sb = document.getElementById('settingsBtn');
+  sb.classList.toggle('active', name === 'settings');
+  sb.setAttribute('aria-expanded', String(name === 'settings'));
+  if(name !== 'settings'){ try{ localStorage.setItem(TAB_KEY, name); } catch(e){} }
   if(state) render();
+  if(name === 'settings') renderSettings();
   if(!keepScroll) window.scrollTo(0, 0);
 }
 
@@ -2864,15 +3376,15 @@ function showTab(name, keepScroll){
 function renderInsights(){
   const st = computeStats();
   const avg = averageSleep(7);
-  const unlocked = BADGES.filter(b => state.badges?.[b.id] || b.value(st) >= b.goal).length;
+  const unlocked = BADGES.filter(b => state.badges?.[b.id] || b.value(st) >= badgeGoal(b)).length;
   const tiles = [
     {label:'Streak', value:st.current, unit:st.current === 1 ? 'day' : 'days', sub:'best ' + st.best},
-    {label:'Success rate', value:st.elapsed ? Math.round(st.success / st.elapsed * 100) : 0, unit:'%', sub:st.success + ' of ' + st.elapsed + ' days', title:'A successful day has 2 of 3: a workout, all core nutrients, sleep logged'},
+    {label:'Success rate', value:st.elapsed ? Math.round(st.success / st.elapsed * 100) : 0, unit:'%', sub:st.success + ' of ' + st.elapsed + ' days', title:successRuleText().replace(/"/g, '&quot;')},
     {label:'Perfect days', value:st.perfect, unit:'', sub:'every goal done'},
     {label:'Level', value:st.level, unit:'', sub:state.totalXP + ' XP total'},
     {label:'Avg sleep', value:avg ? avg.toFixed(1) : '–', unit:avg ? 'h' : '', sub:'last 7 nights'},
     {label:'Badges', value:unlocked, unit:'/ ' + BADGES.length, sub:'unlocked'}
-  ];
+  ].filter(t => t.label !== 'Badges' || SET.badges.enabled);
   document.getElementById('insightTiles').innerHTML = tiles.map(t =>
     `<div class="tile"${t.title ? ` title="${t.title}"` : ''}><div class="t-label">${t.label}</div><div class="t-value">${t.value}<small>${t.unit}</small></div><div class="t-sub">${t.sub}</div></div>`
   ).join('');
@@ -2885,7 +3397,7 @@ function renderHeatmap(){
   root.innerHTML = '';
   document.getElementById('heatTip').classList.add('hidden');
   const today = todayStr(), end = arcEndDate();
-  const offset = (dateFromISO(ARC_START).getUTCDay() + 6) % 7;
+  const offset = weekOffset(ARC_START);
   const gridStart = addDaysISO(ARC_START, -offset);
   const weeks = Math.ceil((offset + ARC_TOTAL_DAYS) / 7);
   const wrap = document.createElement('div');
@@ -2900,7 +3412,7 @@ function renderHeatmap(){
   months.className = 'heat-months';
   const days = document.createElement('div');
   days.className = 'heat-days';
-  ['Mon', '', 'Wed', '', 'Fri', '', 'Sun'].forEach(t => { const s = document.createElement('span'); s.textContent = t; days.appendChild(s); });
+  (SET.challenge.weekStart === 'sun' ? ['Sun', '', 'Tue', '', 'Thu', '', 'Sat'] : ['Mon', '', 'Wed', '', 'Fri', '', 'Sun']).forEach(t => { const s = document.createElement('span'); s.textContent = t; days.appendChild(s); });
   const cells = document.createElement('div');
   cells.className = 'heat-cells';
   let wins = 0;
@@ -2973,18 +3485,20 @@ function renderWeightChart(){
   tip.classList.add('hidden');
   const pts = Object.keys(state.dailyLogs).sort()
     .filter(d => { const v = state.dailyLogs[d].weight; return v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v)); })
-    .map(d => ({d, v:Number(state.dailyLogs[d].weight)}));
+    .map(d => ({d, v:wShow(state.dailyLogs[d].weight)}));
+  const U = wUnit();
+  const goalV = SET.weight.goal !== null && SET.weight.goal !== undefined && Number(SET.weight.goal) > 0 ? wShow(SET.weight.goal) : null;
   const countEl = document.getElementById('weightTrendCount');
   if(pts.length < 2){
-    countEl.textContent = pts.length ? pts[0].v + ' kg' : '';
+    countEl.textContent = pts.length ? pts[0].v + ' ' + U : '';
     root.innerHTML = '<div class="empty">Log your weight on at least two days to see a trend.</div>';
     return;
   }
   const change = pts[pts.length - 1].v - pts[0].v;
-  countEl.textContent = (change > 0 ? '+' : change < 0 ? '−' : '±') + Math.abs(change).toFixed(1) + ' kg since ' + shortDate(pts[0].d);
+  countEl.textContent = (change > 0 ? '+' : change < 0 ? '−' : '±') + Math.abs(change).toFixed(1) + ' ' + U + ' since ' + shortDate(pts[0].d) + (goalV !== null ? ' · ' + weightGoalText().replace(/ to go to your goal of .*/, ' to go') : '');
   const W = Math.max(260, root.clientWidth || 600), H = 180, L = 40, R = 14, T = 14, B = 26;
   const t0 = dateFromISO(pts[0].d).getTime(), t1 = dateFromISO(pts[pts.length - 1].d).getTime();
-  const vs = pts.map(p => p.v);
+  const vs = pts.map(p => p.v).concat(goalV !== null ? [goalV] : []);
   const vmin = Math.min(...vs), vmax = Math.max(...vs);
   const pad = Math.max(0.5, (vmax - vmin) * 0.2);
   const lo = vmin - pad, hi = vmax + pad;
@@ -2994,9 +3508,10 @@ function renderWeightChart(){
   const line = pts.map((p, i) => (i ? 'L' : 'M') + X(p).toFixed(1) + ',' + Y(p.v).toFixed(1)).join(' ');
   const area = line + ` L${X(pts[pts.length - 1]).toFixed(1)},${H - B} L${X(pts[0]).toFixed(1)},${H - B} Z`;
   const r = pts.length > 40 ? 2.5 : 4;
-  root.innerHTML = `<svg class="weight-svg" width="100%" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight from ${pts[0].v} kg to ${pts[pts.length - 1].v} kg">
+  root.innerHTML = `<svg class="weight-svg" width="100%" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight from ${pts[0].v} ${U} to ${pts[pts.length - 1].v} ${U}">
     <defs><linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb020" stop-opacity="0.22"/><stop offset="1" stop-color="#ffb020" stop-opacity="0"/></linearGradient></defs>
     ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end">${v.toFixed(1)}</text>`).join('')}
+    ${goalV !== null ? `<line class="goal" x1="${L}" x2="${W - R}" y1="${Y(goalV).toFixed(1)}" y2="${Y(goalV).toFixed(1)}"/><text class="goal-t" x="${W - R}" y="${(Y(goalV) - 5).toFixed(1)}" text-anchor="end">goal ${goalV}</text>` : ''}
     <path class="area" d="${area}"/>
     <path class="line" d="${line}"/>
     <line class="cross" id="weightCross" y1="${T}" y2="${H - B}" x1="0" x2="0" visibility="hidden"/>
@@ -3018,7 +3533,7 @@ function renderWeightChart(){
     dots.forEach((dot, i) => dot.setAttribute('r', i === best ? r + 2 : r));
     const prev = pts[best - 1];
     const diff = prev ? p.v - prev.v : null;
-    tip.innerHTML = `${longDate(p.d)}<br><b>${p.v} kg</b>${diff === null ? '' : ` <span class="muted">${diff > 0 ? '+' : diff < 0 ? '−' : '±'}${Math.abs(diff).toFixed(1)}</span>`}`;
+    tip.innerHTML = `${longDate(p.d)}<br><b>${p.v} ${U}</b>${diff === null ? '' : ` <span class="muted">${diff > 0 ? '+' : diff < 0 ? '−' : '±'}${Math.abs(diff).toFixed(1)}</span>`}`;
     const sr = svg.getBoundingClientRect();
     positionTip(tip, document.getElementById('weightCard'), sr.left + px, sr.top + Y(p.v));
   };
@@ -3032,47 +3547,73 @@ function renderWeightChart(){
 }
 
 // ----- Badges -----
-const SUCCESS_RULE = 'A day is successful when you hit at least 2 of these 3: tick at least one workout quest, take all five core nutrients (Protein, Creatine, B12, Vitamin C, Magnesium), and log both your bedtime and wake-up time.';
-const PERFECT_RULE = 'A perfect day means every item on the Today page is done: all workout quests, all nutrients (including ones you added), all school goals, 8+ hours of sleep, your water goal and the daily check-in. The ring at the top hits 100% when you get there.';
-const XP_RULE = 'Every 100 XP is one level. You earn XP by completing goals: workout quests and school goals give the XP shown next to them, a finished subject gives its bonus, and each nutrient, the water goal, 8+ hours of sleep, a weight log and the check-in give 5 XP each.';
+// Texts are functions of the target (n), so changing a badge target or a rule
+// in Settings updates every description.
 const streakHint = s => 'Your current streak is ' + s.current + ' ' + (s.current === 1 ? 'day' : 'days') + '; your best so far is ' + s.best + '.';
-const xpHint = s => 'You have ' + s.xp + ' XP right now.';
+const xpHint = s => 'You have ' + s.xp.toLocaleString('en-US') + ' XP right now.';
+const nDays = (n, one, many) => n + ' ' + (n === 1 ? (one || 'day') : (many || 'days'));
+const arcName = () => SET.challenge.name || 'Winter Arc';
+const lvStartXP = n => ((n - 1) * SET.xp.perLevel).toLocaleString('en-US');
+const sleepBadgeDesc = n => SET.sleep.mode === 'logged' ? 'Log your sleep on ' + nDays(n, 'night', 'nights') : 'Sleep ' + SET.sleep.target + '+ hours on ' + nDays(n, 'night', 'nights');
 const BADGES = [
-  {id:'first',      icon:'⚓', name:'Set Sail',          desc:'Log your first goal',              goal:1,   unit:'logged days',     value:s => s.logged,
-   how:'Tick off any goal (a workout, a nutrient, a glass of water…) or press any Log it button. As soon as a day shows up in Log History, this badge is yours.'},
-  {id:'streak3',    icon:'🔥', name:'Kindling',          desc:'Reach a 3-day streak',             goal:3,   unit:'days in a row',   value:s => s.best, hint:streakHint,
-   how:'Have 3 successful days in a row. ' + SUCCESS_RULE},
-  {id:'streak7',    icon:'⚔️', name:'Week Warrior',      desc:'Reach a 7-day streak',             goal:7,   unit:'days in a row',   value:s => s.best, hint:streakHint,
-   how:'Have 7 successful days in a row: a full week without a miss. ' + SUCCESS_RULE},
-  {id:'streak14',   icon:'🌊', name:'Riding the Wave',   desc:'Reach a 14-day streak',            goal:14,  unit:'days in a row',   value:s => s.best, hint:streakHint,
-   how:'Have 14 successful days in a row. ' + SUCCESS_RULE + ' Missing a day resets your current streak, but your best streak is what counts for this badge.'},
-  {id:'streak30',   icon:'🏴‍☠️', name:'Unstoppable',      desc:'Reach a 30-day streak',            goal:30,  unit:'days in a row',   value:s => s.best, hint:streakHint,
-   how:'Have 30 successful days in a row: about a whole month. ' + SUCCESS_RULE + ' Missing a day resets your current streak, but your best streak is what counts for this badge.'},
-  {id:'perfect1',   icon:'⭐', name:'Perfect Day',       desc:'Finish every goal in one day',     goal:1,   unit:'perfect days',    value:s => s.perfect,
-   how:PERFECT_RULE},
-  {id:'perfect10',  icon:'🌟', name:'Perfectionist',     desc:'10 perfect days',                  goal:10,  unit:'perfect days',    value:s => s.perfect,
-   how:'Have 10 perfect days in total. They don\'t need to be in a row. ' + PERFECT_RULE},
-  {id:'success20',  icon:'🏝️', name:'Island Hopper',     desc:'20 successful days',               goal:20,  unit:'successful days', value:s => s.success,
-   how:'Collect 20 successful days during the Winter Arc. They don\'t need to be in a row. ' + SUCCESS_RULE},
-  {id:'success100', icon:'🏆', name:'Legend of the Arc', desc:'100 successful days',              goal:100, unit:'successful days', value:s => s.success,
-   how:'Collect 100 successful days out of the 151 in the Winter Arc. They don\'t need to be in a row. ' + SUCCESS_RULE},
-  {id:'lv5',        icon:'🎖️', name:'Deckhand',          desc:'Reach level 5',                    goal:5,   unit:'level',           value:s => s.level, hint:xpHint,
-   how:'Reach level 5, which starts at 400 XP. ' + XP_RULE},
-  {id:'lv10',       icon:'🏅', name:'First Mate',        desc:'Reach level 10',                   goal:10,  unit:'level',           value:s => s.level, hint:xpHint,
-   how:'Reach level 10, which starts at 900 XP. ' + XP_RULE},
-  {id:'lv25',       icon:'👑', name:'Captain',           desc:'Reach level 25',                   goal:25,  unit:'level',           value:s => s.level, hint:xpHint,
-   how:'Reach level 25, which starts at 2,400 XP. ' + XP_RULE},
-  {id:'workout30',  icon:'💪', name:'Iron Body',         desc:'Complete 30 workout quests',       goal:30,  unit:'quests',          value:s => s.workouts,
-   how:'Tick off 30 workout quests in total on the Workout card. Each quest counts once per day, so finishing all 3 of your quests on one day counts as 3.'},
-  {id:'water7',     icon:'💧', name:'Hydrated',          desc:'Hit your water goal on 7 days',    goal:7,   unit:'days',            value:s => s.waterDays,
-   how:() => 'Reach your daily water goal (currently ' + waterGoal() + ' glasses) on 7 different days. Tap the glasses on the Water card as you drink. The days don\'t need to be in a row.'},
-  {id:'sleep7',     icon:'🌙', name:'Well Rested',       desc:'Sleep 8+ hours on 7 nights',       goal:7,   unit:'nights',          value:s => s.sleepNights,
-   how:'Sleep at least 8 hours on 7 different nights. Enter your bedtime and wake-up time on the Sleep card; any night of 8 hours or more counts, in a row or not.'},
-  {id:'school25',   icon:'📚', name:'Scholar',           desc:'Complete 25 school goals',         goal:25,  unit:'goals',           value:s => s.school,
-   how:'Tick off 25 school goals in total. Add goals inside a subject box on the School Goals card. Each goal counts once per day you complete it.'},
-  {id:'journal7',   icon:'📝', name:'Log Keeper',        desc:'Check in on 7 days',               goal:7,   unit:'check-ins',       value:s => s.checkins,
-   how:'Do the daily check-in on 7 different days: pick how your day went on the Daily check-in card. The note is optional, and the days don\'t need to be in a row.'}
+  {id:'first',      icon:'⚓', name:'Set Sail',          goal:1,   unit:'logged days',     value:s => s.logged,
+   desc:n => n === 1 ? 'Log your first goal' : 'Log goals on ' + nDays(n),
+   how:n => n === 1
+     ? 'Tick off any goal (a workout, a nutrient, a glass of water…) or press any Log it button. As soon as a day shows up in Log History, this badge is yours.'
+     : 'Log goals on ' + nDays(n) + '. Tick off any goal or press any Log it button; every day that shows up in Log History counts.'},
+  {id:'streak3',    icon:'🔥', name:'Kindling',          goal:3,   unit:'days in a row',   value:s => s.best, hint:streakHint,
+   desc:n => 'Reach a ' + n + '-day streak',
+   how:n => 'Have ' + nDays(n, 'successful day', 'successful days') + ' in a row. ' + successRuleText()},
+  {id:'streak7',    icon:'⚔️', name:'Week Warrior',      goal:7,   unit:'days in a row',   value:s => s.best, hint:streakHint,
+   desc:n => 'Reach a ' + n + '-day streak',
+   how:n => 'Have ' + nDays(n, 'successful day', 'successful days') + ' in a row' + (n === 7 ? ': a full week without a miss. ' : '. ') + successRuleText()},
+  {id:'streak14',   icon:'🌊', name:'Riding the Wave',   goal:14,  unit:'days in a row',   value:s => s.best, hint:streakHint,
+   desc:n => 'Reach a ' + n + '-day streak',
+   how:n => 'Have ' + nDays(n, 'successful day', 'successful days') + ' in a row. ' + successRuleText() + ' Missing a day resets your current streak, but your best streak is what counts for this badge.'},
+  {id:'streak30',   icon:'🏴‍☠️', name:'Unstoppable',      goal:30,  unit:'days in a row',   value:s => s.best, hint:streakHint,
+   desc:n => 'Reach a ' + n + '-day streak',
+   how:n => 'Have ' + nDays(n, 'successful day', 'successful days') + ' in a row' + (n === 30 ? ': about a whole month. ' : '. ') + successRuleText() + ' Missing a day resets your current streak, but your best streak is what counts for this badge.'},
+  {id:'perfect1',   icon:'⭐', name:'Perfect Day',       goal:1,   unit:'perfect days',    value:s => s.perfect,
+   desc:n => n === 1 ? 'Finish every goal in one day' : n + ' perfect days',
+   how:n => (n === 1 ? '' : 'Have ' + n + ' perfect days in total. They don\'t need to be in a row. ') + perfectRuleText()},
+  {id:'perfect10',  icon:'🌟', name:'Perfectionist',     goal:10,  unit:'perfect days',    value:s => s.perfect,
+   desc:n => n === 1 ? 'Your first perfect day' : n + ' perfect days',
+   how:n => 'Have ' + nDays(n, 'perfect day', 'perfect days') + ' in total. They don\'t need to be in a row. ' + perfectRuleText()},
+  {id:'success20',  icon:'🏝️', name:'Island Hopper',     goal:20,  unit:'successful days', value:s => s.success,
+   desc:n => nDays(n, 'successful day', 'successful days'),
+   how:n => 'Collect ' + nDays(n, 'successful day', 'successful days') + ' during the ' + arcName() + '. They don\'t need to be in a row. ' + successRuleText()},
+  {id:'success100', icon:'🏆', name:'Legend of the Arc', goal:100, unit:'successful days', value:s => s.success,
+   desc:n => nDays(n, 'successful day', 'successful days'),
+   how:n => 'Collect ' + nDays(n, 'successful day', 'successful days') + ' out of the ' + ARC_TOTAL_DAYS + ' in the ' + arcName() + '. They don\'t need to be in a row. ' + successRuleText()},
+  {id:'lv5',        icon:'🎖️', name:'Deckhand',          goal:5,   unit:'level',           value:s => s.level, hint:xpHint,
+   desc:n => 'Reach level ' + n,
+   how:n => 'Reach level ' + n + ', which starts at ' + lvStartXP(n) + ' XP. ' + xpRuleText()},
+  {id:'lv10',       icon:'🏅', name:'First Mate',        goal:10,  unit:'level',           value:s => s.level, hint:xpHint,
+   desc:n => 'Reach level ' + n,
+   how:n => 'Reach level ' + n + ', which starts at ' + lvStartXP(n) + ' XP. ' + xpRuleText()},
+  {id:'lv25',       icon:'👑', name:'Captain',           goal:25,  unit:'level',           value:s => s.level, hint:xpHint,
+   desc:n => 'Reach level ' + n,
+   how:n => 'Reach level ' + n + ', which starts at ' + lvStartXP(n) + ' XP. ' + xpRuleText()},
+  {id:'workout30',  icon:'💪', name:'Iron Body',         goal:30,  unit:'quests',          value:s => s.workouts,
+   desc:n => 'Complete ' + nDays(n, 'workout quest', 'workout quests'),
+   how:n => 'Tick off ' + nDays(n, 'workout quest', 'workout quests') + ' in total on the Workout card. Each quest counts once per day, so finishing 3 quests on one day counts as 3.'},
+  {id:'water7',     icon:'💧', name:'Hydrated',          goal:7,   unit:'days',            value:s => s.waterDays,
+   desc:n => 'Hit your water goal on ' + nDays(n),
+   how:n => 'Reach your daily water goal (currently ' + waterGoal() + ' glasses) on ' + nDays(n, 'day', 'different days') + '. Tap the glasses on the Water card as you drink. The days don\'t need to be in a row.'},
+  {id:'sleep7',     icon:'🌙', name:'Well Rested',       goal:7,   unit:'nights',          value:s => s.sleepNights,
+   desc:sleepBadgeDesc,
+   how:n => SET.sleep.mode === 'logged'
+     ? 'Log your bedtime and wake-up time on the Sleep card on ' + nDays(n, 'night', 'different nights') + ', in a row or not.'
+     : 'Sleep at least ' + SET.sleep.target + ' hours on ' + nDays(n, 'night', 'different nights') + '. Enter your bedtime and wake-up time on the Sleep card; any night of ' + SET.sleep.target + ' hours or more counts, in a row or not.'},
+  {id:'school25',   icon:'📚', name:'Scholar',           goal:25,  unit:'goals',           value:s => s.school,
+   desc:n => 'Complete ' + nDays(n, 'school goal', 'school goals'),
+   how:n => 'Tick off ' + nDays(n, 'school goal', 'school goals') + ' in total. Add goals inside a subject box on the School Goals card. Each goal counts once per day you complete it.'},
+  {id:'journal7',   icon:'📝', name:'Log Keeper',        goal:7,   unit:'check-ins',       value:s => s.checkins,
+   desc:n => 'Check in on ' + nDays(n),
+   how:n => 'Do the daily check-in on ' + nDays(n, 'day', 'different days') + ': pick how your day went on the Daily check-in card. The note is optional, and the days don\'t need to be in a row.'}
 ];
+// The target can be changed in Settings; b.goal is the default.
+function badgeGoal(b){ const t = Number(SET.badges.targets && SET.badges.targets[b.id]); return t >= 1 ? Math.round(t) : b.goal; }
 
 // Badge medals: brushed-gold bezel with fine ticks, a jewel-tone face and a
 // single-weight line glyph in champagne gold (the old emoji are kept as b.emoji).
@@ -3118,11 +3659,12 @@ function checkBadges(){
   const st = computeStats();
   const fresh = [];
   BADGES.forEach(b => {
-    if(!state.badges[b.id] && b.value(st) >= b.goal){ state.badges[b.id] = todayStr(); fresh.push(b); }
+    if(!state.badges[b.id] && b.value(st) >= badgeGoal(b)){ state.badges[b.id] = todayStr(); fresh.push(b); }
   });
   return fresh;
 }
 function celebrateBadges(list){
+  if(!SET.badges.enabled || !SET.badges.popups) return;
   confetti();
   buzz([20, 40, 20]);
   list.forEach(b => showToast(b.icon, '<b>Badge unlocked:</b> ' + escapeHtml(b.name)));
@@ -3134,26 +3676,28 @@ function renderBadges(){
   let unlocked = 0;
   BADGES.forEach(b => {
     const val = b.value(st);
+    const g = badgeGoal(b);
     const when = state.badges?.[b.id];
-    const got = !!when || val >= b.goal;
+    const got = !!when || val >= g;
     if(got) unlocked++;
     const el = document.createElement('button');
     el.type = 'button';
     el.className = 'badge' + (got ? ' unlocked' : '');
     el.dataset.badge = b.id;
     el.setAttribute('aria-label', b.name + (got ? ', unlocked' : ', locked') + '. Show details');
-    el.innerHTML = `<div class="b-icon">${b.icon}</div><div class="b-name">${b.name}</div><div class="b-desc">${b.desc}</div>` +
+    el.innerHTML = `<div class="b-icon">${b.icon}</div><div class="b-name">${b.name}</div><div class="b-desc">${escapeHtml(b.desc(g))}</div>` +
       (got
         ? `<div class="b-meta">${when ? 'Unlocked ' + shortDate(when) : 'Unlocked'}</div>`
-        : `<div class="b-prog"><div style="width:${Math.min(100, val / b.goal * 100)}%"></div></div><div class="b-prog-txt">${Math.min(val, b.goal)} / ${b.goal}</div>`);
+        : `<div class="b-prog"><div style="width:${Math.min(100, val / g * 100)}%"></div></div><div class="b-prog-txt">${Math.min(val, g)} / ${g}</div>`);
     root.appendChild(el);
   });
   document.getElementById('badgeCount').textContent = unlocked + ' / ' + BADGES.length + ' unlocked';
 }
 
 function badgeProgressText(b, val){
-  if(b.unit === 'level') return 'Level ' + Math.min(val, b.goal) + ' of ' + b.goal;
-  return Math.min(val, b.goal) + ' / ' + b.goal + ' ' + b.unit;
+  const g = badgeGoal(b);
+  if(b.unit === 'level') return 'Level ' + Math.min(val, g) + ' of ' + g;
+  return Math.min(val, g) + ' / ' + g + ' ' + b.unit;
 }
 function openBadge(id){
   const b = BADGES.find(x => x.id === id);
@@ -3161,9 +3705,10 @@ function openBadge(id){
   const st = computeStats();
   const val = b.value(st);
   const when = state.badges?.[b.id];
-  const got = !!when || val >= b.goal;
-  const left = Math.max(0, b.goal - val);
-  const how = typeof b.how === 'function' ? b.how() : b.how;
+  const g = badgeGoal(b);
+  const got = !!when || val >= g;
+  const left = Math.max(0, g - val);
+  const how = b.how(g);
   const hint = b.hint ? b.hint(st) : '';
   document.getElementById('badgeDetail').innerHTML = `
     <div class="bd-hero${got ? ' unlocked' : ''}">
@@ -3174,12 +3719,12 @@ function openBadge(id){
       </div>
     </div>
     <div class="bd-label">What it is</div>
-    <p class="bd-text">${b.desc}.</p>
+    <p class="bd-text">${escapeHtml(b.desc(g))}.</p>
     <div class="bd-label">How to earn it</div>
     <p class="bd-text">${escapeHtml(how)}</p>
     <div class="bd-label">Your progress</div>
-    <div class="b-prog bd-prog"><div style="width:${got ? 100 : Math.min(100, val / b.goal * 100)}%"></div></div>
-    <div class="bd-prog-txt">${badgeProgressText(b, got ? Math.max(val, b.goal) : val)}${got ? ' · done ✓' : ' · ' + left + ' to go'}</div>
+    <div class="b-prog bd-prog"><div style="width:${got ? 100 : Math.min(100, val / g * 100)}%"></div></div>
+    <div class="bd-prog-txt">${badgeProgressText(b, got ? Math.max(val, g) : val)}${got ? ' · done ✓' : ' · ' + left + ' to go'}</div>
     ${hint ? `<p class="bd-hint">${escapeHtml(hint)}</p>` : ''}`;
   document.getElementById('badgeModal').classList.remove('hidden');
   document.getElementById('closeBadgeBtn').focus();
@@ -3202,7 +3747,7 @@ function showToast(icon, html){
   setTimeout(() => notification.remove(), 5000);
 }
 function confetti(){
-  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if(!DEV.confetti || reduceMotion()) return;
   const c = document.createElement('canvas');
   c.className = 'confetti';
   document.body.appendChild(c);
@@ -3251,6 +3796,7 @@ const SVGNS = 'http://www.w3.org/2000/svg';
 let battleRunning = false;
 
 function growl(){
+  if(!DEV.sound || !(Number(DEV.volume) > 0)) return;
   // A monster roar built from layers, all synthesized (only ever from a click):
   //  - a sub-bass rumble you feel more than hear
   //  - a distorted, throaty roar whose "vowel" sweeps open like a jaw
@@ -3265,7 +3811,7 @@ function growl(){
 
     const out = ac.createDynamicsCompressor();
     out.threshold.value = -14; out.ratio.value = 6; out.attack.value = .003; out.release.value = .25;
-    const master = ac.createGain(); master.gain.value = .9;
+    const master = ac.createGain(); master.gain.value = Math.min(1, Math.max(0, Number(DEV.volume ?? .9)));
     out.connect(master).connect(ac.destination);
 
     // cave echo: decaying noise impulse
@@ -3426,8 +3972,8 @@ function closeMouth(oni, scene){
 }
 
 function startBattle(){
-  if(battleRunning) return;
-  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){ growl(); return; }
+  if(battleRunning || !DEV.easterEgg) return;
+  if(reduceMotion() || DEV.motion === 'off'){ growl(); return; }
   const oni = document.getElementById('onigashima');
   const scene = document.querySelector('.scene-evening');
   if(!oni || !document.body.classList.contains('theme-evening')) return;
@@ -3664,6 +4210,811 @@ function onLongPress(el, handler, ms = 550){
 onLongPress(document.getElementById('greeting'), () => startTextEdit(document.getElementById('greeting'), 'customGreeting', 48, 'Your greeting'));
 onLongPress(document.getElementById('dailyLine'), () => startTextEdit(document.getElementById('dailyLine'), 'customQuote', 140, 'Your quote'));
 
+
+// ===================== SETTINGS TAB =====================
+const APP_VERSION = '2.0';
+const REPO_URL = 'https://github.com/Vyush-ux/training-log';
+let lastMainTab = 'today';
+let settingsSaveTimer = null;
+
+// ----- tiny DOM builder -----
+function el(tag, attrs, kids){
+  const n = document.createElement(tag);
+  Object.entries(attrs || {}).forEach(([k, v]) => {
+    if(v === null || v === undefined || v === false) return;
+    if(k === 'class') n.className = v;
+    else if(k === 'text') n.textContent = v;
+    else if(k === 'html') n.innerHTML = v;
+    else if(k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? '' : v);
+  });
+  [].concat(kids || []).forEach(c => { if(c !== null && c !== undefined && c !== false) n.append(c.nodeType ? c : document.createTextNode(String(c))); });
+  return n;
+}
+
+// ----- saving -----
+function queueSave(){
+  clearTimeout(settingsSaveTimer);
+  settingsSaveTimer = setTimeout(() => saveState(), 450);
+}
+function setS(path, value){
+  if(!state) return;
+  if(!state.settings) state.settings = {};
+  const keys = path.split('.');
+  let o = state.settings;
+  keys.slice(0, -1).forEach(k => { if(!isPlainObject(o[k])) o[k] = {}; o = o[k]; });
+  o[keys[keys.length - 1]] = cloneJSON(value);
+  refreshSettings();
+  render();
+  queueSave();
+}
+function resetS(prefix){
+  if(!state || !state.settings) return;
+  delete state.settings[prefix];
+  refreshSettings(); render(); queueSave();
+}
+function setD(key, value){
+  DEV[key] = value;
+  saveDev();
+  applyTheme();
+}
+
+// ----- controls -----
+function row(label, help, ctl, opts){
+  const r = el('div', {class: 'set-row' + (opts && opts.stack ? ' stack' : '')});
+  r.dataset.q = (label + ' ' + (help || '') + ' ' + ((opts && opts.keywords) || '')).toLowerCase();
+  r.append(el('div', {class: 'set-lab'}, [el('b', {text: label}), help ? el('small', {text: help}) : null]), el('div', {class: 'set-ctl'}, ctl));
+  return r;
+}
+function textIn(value, onCommit, o = {}){
+  const i = el('input', {type: 'text', value: value || '', placeholder: o.placeholder || '', maxlength: o.max || 80, 'aria-label': o.label || ''});
+  i.addEventListener('change', () => onCommit(i.value.trim()));
+  i.addEventListener('keydown', e => { if(e.key === 'Enter') i.blur(); });
+  if(o.wide) i.classList.add('wide');
+  return i;
+}
+function numIn(value, onCommit, o = {}){
+  const i = el('input', {type: 'number', value: value === null || value === undefined ? '' : value, min: o.min, max: o.max, step: o.step || 1, placeholder: o.placeholder || '', 'aria-label': o.label || ''});
+  i.addEventListener('change', () => {
+    if(i.value === '' && o.allowEmpty){ onCommit(null); return; }
+    let v = Number(i.value);
+    if(!Number.isFinite(v)) v = o.fallback !== undefined ? o.fallback : Number(o.min) || 0;
+    if(o.min !== undefined) v = Math.max(o.min, v);
+    if(o.max !== undefined) v = Math.min(o.max, v);
+    i.value = v;
+    onCommit(v);
+  });
+  return o.suffix ? el('span', {class: 'num-wrap'}, [i, el('span', {class: 'num-suffix', text: o.suffix})]) : i;
+}
+function toggleIn(checked, onChange, label){
+  const i = el('input', {type: 'checkbox', 'aria-label': label || ''});
+  i.checked = !!checked;
+  i.addEventListener('change', () => onChange(i.checked));
+  return el('label', {class: 'switch'}, [i, el('span', {class: 'switch-track'}, el('span', {class: 'switch-dot'}))]);
+}
+function segIn(options, value, onChange){
+  const wrap = el('div', {class: 'seg', role: 'radiogroup'});
+  options.forEach(([v, label]) => {
+    const b = el('button', {type: 'button', class: v === value ? 'active' : '', role: 'radio', 'aria-checked': String(v === value), text: label});
+    b.addEventListener('click', () => {
+      wrap.querySelectorAll('button').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-checked', 'false'); });
+      b.classList.add('active'); b.setAttribute('aria-checked', 'true');
+      onChange(v);
+    });
+    wrap.append(b);
+  });
+  return wrap;
+}
+function selectIn(options, value, onChange, label){
+  const s = el('select', {'aria-label': label || ''});
+  options.forEach(([v, l]) => { const o = el('option', {value: v, text: l}); if(String(v) === String(value)) o.selected = true; s.append(o); });
+  s.addEventListener('change', () => onChange(s.value));
+  return s;
+}
+function colorIn(value, onChange, label){
+  const i = el('input', {type: 'color', value: value || '#ffb020', 'aria-label': label || ''});
+  i.addEventListener('change', () => onChange(i.value));
+  return i;
+}
+function rangeIn(value, min, max, step, onInput, fmt){
+  const out = el('span', {class: 'range-val', text: fmt(value)});
+  const i = el('input', {type: 'range', min, max, step, value});
+  i.addEventListener('input', () => { out.textContent = fmt(Number(i.value)); onInput(Number(i.value), false); });
+  i.addEventListener('change', () => onInput(Number(i.value), true));
+  return el('span', {class: 'range-wrap'}, [i, out]);
+}
+function smallBtn(text, onClick, cls){ return el('button', {type: 'button', class: 'btn ghost small ' + (cls || ''), text, onclick: onClick}); }
+function iconBtn(svgPath, label, onClick, cls){
+  return el('button', {type: 'button', class: 'set-icon-btn ' + (cls || ''), 'aria-label': label, title: label, onclick: onClick,
+    html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + svgPath + '"/></svg>'});
+}
+const ICON_UP = 'M6 15l6-6 6 6', ICON_DOWN = 'M6 9l6 6 6-6', ICON_X = 'M6 6l12 12M18 6L6 18';
+// Two-tap buttons for anything destructive (no browser pop-ups needed)
+function confirmBtn(text, confirmText, action, cls){
+  let armed = false, t = null;
+  const b = el('button', {type: 'button', class: 'btn small ' + (cls || 'danger'), text});
+  b.addEventListener('click', async () => {
+    if(!armed){ armed = true; b.textContent = confirmText; b.classList.add('armed'); t = setTimeout(() => { armed = false; b.textContent = text; b.classList.remove('armed'); }, 4000); return; }
+    clearTimeout(t); armed = false; b.textContent = text; b.classList.remove('armed');
+    await action();
+  });
+  return b;
+}
+function note(text, cls){ return el('p', {class: 'set-note ' + (cls || ''), text}); }
+function flash(msg, kind){
+  const box = document.getElementById('setFlash');
+  if(!box) return;
+  box.textContent = msg;
+  box.className = 'set-flash show ' + (kind || '');
+  clearTimeout(flash.t);
+  flash.t = setTimeout(() => box.classList.remove('show'), 3200);
+}
+
+// ----- section icons (thin line, matches the nav) -----
+const SEC_ICONS = {
+  you: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20c1.2-4 4.2-6 7.5-6s6.3 2 7.5 6',
+  challenge: 'M5 21V4M5 4h11l-2 4 2 4H5',
+  layout: 'M4 5h16M4 12h16M4 19h16',
+  workout: 'M6.5 8v8M17.5 8v8M3.5 10v4M20.5 10v4M6.5 12h11',
+  nutrients: 'M12 3c4 3 6 7 6 10a6 6 0 0 1-12 0c0-3 2-7 6-10zM12 9v8',
+  water: 'M12 3.5c3.5 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2.5-6 6-11z',
+  sleep: 'M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z',
+  weight: 'M5 20h14l-2-11H7zM9.5 9a2.5 2.5 0 0 1 5 0',
+  school: 'M3 9l9-4 9 4-9 4zM7 11v5c2.5 2 7.5 2 10 0v-5',
+  xp: 'M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z',
+  badges: 'M12 14a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM8.5 13l-1.5 8 5-3 5 3-1.5-8',
+  look: 'M12 3a9 9 0 1 0 0 18c1 0 1.5-.7 1.5-1.5s-.6-1.2-.6-2 .7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 12.5h.01M9.5 8h.01M14.5 8h.01',
+  backgrounds: 'M4 5h16v14H4zM6.5 16.5l4-4.5 3 3 2-2 2.5 3.5M15.5 9.5h.01',
+  sound: 'M5 9v6h4l5 4V5L9 9zM17 9.5a3.5 3.5 0 0 1 0 5M19.5 7a7 7 0 0 1 0 10',
+  data: 'M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
+  about: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01'
+};
+const SECTIONS = [
+  ['you', 'You & text', 'Your name, greeting, quotes and moods', 'sync'],
+  ['challenge', 'Your challenge', 'Name, dates, when a new day starts', 'sync'],
+  ['layout', 'Today page layout', 'Show, hide and reorder sections', 'sync'],
+  ['workout', 'Workout', 'Quests, categories and attribute levels', 'sync'],
+  ['nutrients', 'Nutrients', 'Rename, remove, choose what counts', 'sync'],
+  ['water', 'Water', 'Goal, glass size and XP', 'sync'],
+  ['sleep', 'Sleep', 'Target hours and what counts', 'sync'],
+  ['weight', 'Weight', 'Units and your goal weight', 'sync'],
+  ['school', 'School', 'Subjects, goals and bonus XP', 'sync'],
+  ['xp', 'XP, levels & rules', 'Levels, successful and perfect days', 'sync'],
+  ['badges', 'Badges', 'Badge targets and pop-ups', 'sync'],
+  ['look', 'Look & themes', 'Theme, schedule, motion, colors, text size', 'dev'],
+  ['backgrounds', 'Backgrounds', 'Add your own pictures and videos', 'dev'],
+  ['sound', 'Sound & feel', 'Roar, vibration and pop-ups', 'dev'],
+  ['data', 'Sync & data', 'Sync code, backups and resets', 'mixed'],
+  ['about', 'About', 'Version and links', '']
+];
+const SCOPE_CHIP = {sync: ['synced', 'Saved in your log, so it follows you to every device'], dev: ['this device', 'Only changes this browser'], mixed: ['synced + device', '']};
+
+function renderSettings(){
+  const root = document.getElementById('tab-settings');
+  if(!root || !state) return;
+  const open = new Set([...root.querySelectorAll('details.set-sec[open]')].map(d => d.dataset.sec));
+  const q = (root.querySelector('.set-search') || {}).value || '';
+  root.innerHTML = '';
+  const search = el('input', {type: 'search', class: 'set-search', placeholder: 'Search settings', 'aria-label': 'Search settings', value: q});
+  search.addEventListener('input', () => filterSettings(search.value));
+  root.append(
+    el('div', {class: 'set-head'}, [
+      el('button', {type: 'button', class: 'set-back', 'aria-label': 'Back', onclick: () => showTab(lastMainTab),
+        html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>'}),
+      el('div', {class: 'section-title', text: 'Settings'}),
+      el('div', {class: 'set-flash', id: 'setFlash', role: 'status', 'aria-live': 'polite'})
+    ]),
+    search,
+    el('p', {class: 'set-intro', html: 'Everything saves by itself. <span class="chip sync">synced</span> settings follow you to every device, <span class="chip dev">this device</span> ones only change this browser.'})
+  );
+  SECTIONS.forEach(([key, title, sub, scope]) => {
+    const d = el('details', {class: 'set-sec card'});
+    d.dataset.sec = key;
+    if(open.has(key)) d.open = true;
+    const chip = SCOPE_CHIP[scope];
+    d.append(el('summary', {}, [
+      el('span', {class: 'set-ico', html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + SEC_ICONS[key] + '"/></svg>'}),
+      el('span', {class: 'set-st'}, [el('b', {text: title}), el('small', {text: sub})]),
+      chip ? el('span', {class: 'chip ' + scope, title: chip[1], text: chip[0]}) : null,
+      el('span', {class: 'set-chev', html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'})
+    ]));
+    const body = el('div', {class: 'set-body'});
+    d.append(body);
+    d.addEventListener('toggle', () => { if(d.open && !body.childElementCount) fillSection(key, body); });
+    if(d.open) fillSection(key, body);
+    root.append(d);
+  });
+  if(q) filterSettings(q);
+}
+function rebuildSection(key){
+  const d = document.querySelector('#tab-settings details.set-sec[data-sec="' + key + '"]');
+  if(!d) return;
+  const body = d.querySelector('.set-body');
+  const y = window.scrollY;
+  body.innerHTML = '';
+  if(d.open) fillSection(key, body);
+  window.scrollTo(0, y);
+}
+function fillSection(key, body){
+  const fn = SECTION_BUILDERS[key];
+  if(fn) fn(body);
+}
+function filterSettings(q){
+  q = q.trim().toLowerCase();
+  document.querySelectorAll('#tab-settings details.set-sec').forEach(d => {
+    const body = d.querySelector('.set-body');
+    if(q && !body.childElementCount) fillSection(d.dataset.sec, body);
+    const title = d.querySelector('summary').textContent.toLowerCase();
+    let any = !q || title.includes(q);
+    d.querySelectorAll('.set-row').forEach(r => {
+      const hit = !q || title.includes(q) || r.dataset.q.includes(q);
+      r.classList.toggle('filtered', !hit);
+      if(hit) any = true;
+    });
+    d.classList.toggle('filtered', !any);
+    if(q && any) d.open = true;
+  });
+}
+function sectionReset(body, label, fn){
+  body.append(el('div', {class: 'set-foot'}, confirmBtn(label || 'Reset this section', 'Tap again to reset', fn, 'ghost')));
+}
+
+// ----- list editor for text items -----
+function listEditor(items, onSave, o = {}){
+  const box = el('div', {class: 'set-list'});
+  const draw = () => {
+    box.innerHTML = '';
+    if(!items.length) box.append(el('div', {class: 'set-empty', text: o.empty || 'Nothing here yet.'}));
+    items.forEach((it, i) => {
+      const inp = textIn(it, v => { if(v) items[i] = v; else items.splice(i, 1); onSave(items.slice()); draw(); }, {max: o.max || 140, wide: true, label: (o.itemLabel || 'Item') + ' ' + (i + 1)});
+      box.append(el('div', {class: 'set-li'}, [inp, iconBtn(ICON_X, 'Remove', () => { items.splice(i, 1); onSave(items.slice()); draw(); }, 'del')]));
+    });
+    const add = textIn('', () => {}, {max: o.max || 140, wide: true, placeholder: o.placeholder || 'Add new', label: 'New ' + (o.itemLabel || 'item')});
+    const go = () => { const v = add.value.trim(); if(!v) return; items.push(v); onSave(items.slice()); draw(); box.querySelector('.set-li.add input').focus(); };
+    add.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); go(); } });
+    box.append(el('div', {class: 'set-li add'}, [add, smallBtn('Add', go)]));
+  };
+  draw();
+  return box;
+}
+
+const SECTION_BUILDERS = {
+  // ---------------- You & text ----------------
+  you(body){
+    body.append(
+      row('Your name', 'Used in the greeting, like "Good evening, captain".', textIn(SET.profile.name, v => setS('profile.name', v || 'captain'), {max: 24, placeholder: 'captain', label: 'Your name'})),
+      row('Custom greeting', 'Leave empty for the automatic one. You can also long-press the greeting.', textIn(customText('customGreeting'), v => { state.customGreeting = v; render(); queueSave(); }, {max: 48, placeholder: greetingText(), wide: true, label: 'Custom greeting'}), {stack: true}),
+      row('Custom quote', 'Pins one quote instead of the daily one. Leave empty to turn it off.', textIn(customText('customQuote'), v => { state.customQuote = v; render(); queueSave(); }, {max: 140, placeholder: 'Your own line for every day', wide: true, label: 'Custom quote'}), {stack: true}),
+      row('Daily quote comes from', 'My list is the quotes you add below.', segIn([['builtin', 'Built-in'], ['mine', 'My list'], ['both', 'Both']], SET.profile.quoteMode, v => setS('profile.quoteMode', v))),
+      row('My quotes', 'One quote per line. They rotate one per day.', listEditor((SET.profile.quotes || []).slice(), arr => setS('profile.quotes', arr), {placeholder: 'Add a quote', itemLabel: 'Quote', empty: 'No quotes yet.'}), {stack: true}),
+      row('Check-in mood labels', 'The five buttons on the Daily check-in, from worst to best.', el('div', {class: 'mood-edit'}, MOODS.map((m, i) => textIn(m, v => { const a = MOODS.slice(); a[i] = v || SETTINGS_DEFAULTS.profile.moods[i]; setS('profile.moods', a); }, {max: 14, label: 'Mood ' + (i + 1)}))), {stack: true}),
+      row('Top label', 'The small text next to the anchor at the top.', textIn(SET.profile.topLabel, v => setS('profile.topLabel', v || 'winter arc'), {max: 30, placeholder: 'winter arc', label: 'Top label'}))
+    );
+    sectionReset(body, 'Reset names & quotes', () => { resetS('profile'); rebuildSection('you'); });
+  },
+
+  // ---------------- Challenge ----------------
+  challenge(body){
+    const today = todayStr();
+    const dateIn = (value, onCommit, label) => { const i = el('input', {type: 'date', value, 'aria-label': label}); i.addEventListener('change', () => { if(validISO(i.value)) onCommit(i.value); }); return i; };
+    body.append(
+      row('Challenge name', 'Shown at the bottom of the page and in badge descriptions.', textIn(SET.challenge.name, v => setS('challenge.name', v || 'Winter Arc'), {max: 30, placeholder: 'Winter Arc', label: 'Challenge name'})),
+      row('Start date', 'The day counter, Voyage dots and streak history start here.', dateIn(SET.challenge.start, v => { setS('challenge.start', v); if(SET.challenge.end < v) setS('challenge.end', addDaysISO(v, 150)); rebuildSection('challenge'); }, 'Start date')),
+      row('End date', 'Up to about 3 years after the start.', dateIn(SET.challenge.end, v => { if(v < SET.challenge.start){ flash('The end date has to be after the start date.', 'warn'); rebuildSection('challenge'); return; } setS('challenge.end', v); rebuildSection('challenge'); }, 'End date')),
+      note(ARC_TOTAL_DAYS + ' days in total · today is day ' + Math.max(0, daysBetween(ARC_START, today) + 1) + '.'),
+      row('New day starts at', 'Pick a later time if you often log after midnight.', selectIn([0, 1, 2, 3, 4, 5, 6].map(h => [h, h === 0 ? 'Midnight' : h + ':00']), SET.challenge.dayStart, v => setS('challenge.dayStart', Number(v)), 'New day starts at')),
+      row('Week starts on', 'Used by the week strip and the Voyage chart.', segIn([['mon', 'Monday'], ['sun', 'Sunday']], SET.challenge.weekStart, v => setS('challenge.weekStart', v))),
+      row('Date format', '', selectIn(['mdy', 'dmy', 'dmon', 'iso'].map(f => [f, fmtDate(today, f)]), SET.challenge.dateFormat, v => setS('challenge.dateFormat', v), 'Date format'))
+    );
+    sectionReset(body, 'Reset challenge settings', () => { resetS('challenge'); rebuildSection('challenge'); });
+  },
+
+  // ---------------- Layout ----------------
+  layout(body){
+    const NAMES = {quote: 'Daily quote', week: 'Week strip', workout: 'Workout', nutrients: 'Nutrients', water: 'Water', sleep: 'Sleep', weight: 'Weight', school: 'School goals', checkin: 'Daily check-in', dailylog: 'Daily goal log'};
+    const order = SET.layout.order.slice();
+    const list = el('div', {class: 'set-list order'});
+    order.forEach((k, i) => {
+      const shown = !SET.layout.hidden[k];
+      list.append(el('div', {class: 'set-li' + (shown ? '' : ' muted')}, [
+        el('span', {class: 'set-li-name', text: NAMES[k] || k}),
+        toggleIn(shown, v => { const h = {...SET.layout.hidden}; if(v) delete h[k]; else h[k] = true; setS('layout.hidden', h); rebuildSection('layout'); }, 'Show ' + (NAMES[k] || k)),
+        iconBtn(ICON_UP, 'Move up', () => { if(i === 0) return; [order[i - 1], order[i]] = [order[i], order[i - 1]]; setS('layout.order', order); rebuildSection('layout'); }, i === 0 ? 'off' : ''),
+        iconBtn(ICON_DOWN, 'Move down', () => { if(i === order.length - 1) return; [order[i + 1], order[i]] = [order[i], order[i + 1]]; setS('layout.order', order); rebuildSection('layout'); }, i === order.length - 1 ? 'off' : '')
+      ]));
+    });
+    body.append(
+      row('Sections on the Today page', 'Switch a section off to hide it, use the arrows to move it. The top card always stays first.', list, {stack: true, keywords: Object.values(NAMES).join(' ')}),
+      row('Open the app on', '', selectIn([['last', 'The tab I used last'], ['today', 'Today'], ['insights', 'Insights'], ['badges', 'Badges']], SET.layout.firstTab, v => setS('layout.firstTab', v), 'Open the app on'))
+    );
+    sectionReset(body, 'Reset layout', () => { resetS('layout'); rebuildSection('layout'); });
+  },
+
+  // ---------------- Workout ----------------
+  workout(body){
+    const catOpts = Object.keys(CATS).map(k => [k, CATS[k].label]);
+    const list = el('div', {class: 'set-list'});
+    if(!state.questTemplates.length) list.append(el('div', {class: 'set-empty', text: 'No quests yet.'}));
+    state.questTemplates.forEach((q, i) => {
+      list.append(el('div', {class: 'set-li quest'}, [
+        textIn(q.text, v => { if(!v) return; q.text = v; render(); queueSave(); }, {max: 60, wide: true, label: 'Quest name'}),
+        selectIn(catOpts, q.cat, v => { q.cat = v; render(); queueSave(); }, 'Category'),
+        numIn(q.xp, v => { q.xp = v; render(); queueSave(); }, {min: 0, max: 1000, suffix: 'XP', label: 'XP'}),
+        iconBtn(ICON_UP, 'Move up', () => { if(!i) return; const a = state.questTemplates; [a[i - 1], a[i]] = [a[i], a[i - 1]]; render(); queueSave(); rebuildSection('workout'); }, i === 0 ? 'off' : ''),
+        iconBtn(ICON_X, 'Delete quest', async () => { await deleteQuest(q.id); rebuildSection('workout'); }, 'del')
+      ]));
+    });
+    const nName = textIn('', () => {}, {max: 60, wide: true, placeholder: 'New quest, e.g. 50 push-ups', label: 'New quest'});
+    const nCat = selectIn(catOpts, 'strength', () => {}, 'New quest category');
+    const nXp = numIn(15, () => {}, {min: 0, max: 1000, suffix: 'XP', label: 'New quest XP'});
+    const addQ = async () => {
+      const t = nName.value.trim(); if(!t) { nName.focus(); return; }
+      state.questTemplates.push({id: 'q' + Date.now(), text: t, cat: nCat.value, xp: Math.max(0, Number(nXp.querySelector('input').value) || 0)});
+      await saveState(); render(); rebuildSection('workout');
+    };
+    nName.addEventListener('keydown', e => { if(e.key === 'Enter') addQ(); });
+    list.append(el('div', {class: 'set-li quest add'}, [nName, nCat, nXp, smallBtn('Add', addQ)]));
+    body.append(row('Quests', 'Edit the name, category and XP of every quest.', list, {stack: true}));
+    const cats = el('div', {class: 'set-grid2'});
+    Object.keys(CATS).forEach(k => {
+      cats.append(el('div', {class: 'set-li cat'}, [
+        colorIn(CATS[k].color, v => setS('categories.' + k + '.color', v), CATS[k].label + ' color'),
+        textIn(CATS[k].label, v => { setS('categories.' + k + '.label', v || SETTINGS_DEFAULTS.categories[k].label); rebuildSection('workout'); }, {max: 24, label: 'Category name'})
+      ]));
+    });
+    body.append(
+      row('Categories', 'Rename the four categories and pick their colors.', cats, {stack: true, keywords: 'strength endurance speed flexibility color'}),
+      row('XP per attribute level', 'How much category XP one Strength/Endurance/... level takes.', numIn(SET.stats.perLevel, v => setS('stats.perLevel', v), {min: 5, max: 100000, suffix: 'XP', label: 'XP per attribute level'}))
+    );
+    sectionReset(body, 'Reset categories & levels', () => { resetS('categories'); resetS('stats'); rebuildSection('workout'); });
+  },
+
+  // ---------------- Nutrients ----------------
+  nutrients(body){
+    const defs = getNutrientDefinitions();
+    const core = new Set(SET.rules.core || []);
+    const list = el('div', {class: 'set-list'});
+    Object.keys(defs).forEach(k => {
+      const isCustom = !(k in NUTRIENTS);
+      list.append(el('div', {class: 'set-li nut'}, [
+        textIn(defs[k], v => {
+          if(!v) return;
+          if(isCustom){ const c = state.customNutrients.find(x => x.id === k); if(c) c.name = v; render(); queueSave(); }
+          else setS('nutrients.names.' + k, v);
+        }, {max: 40, wide: true, label: 'Nutrient name'}),
+        el('span', {class: 'set-mini'}, [toggleIn(core.has(k), v => { const s = new Set(SET.rules.core); if(v) s.add(k); else s.delete(k); setS('rules.core', [...s]); }, 'Counts for a successful day'), el('small', {text: 'core'})]),
+        iconBtn(ICON_X, 'Remove ' + defs[k], () => {
+          if(isCustom){ state.customNutrients = state.customNutrients.filter(x => x.id !== k); render(); queueSave(); }
+          else setS('nutrients.removed', [...new Set([...(SET.nutrients.removed || []), k])]);
+          rebuildSection('nutrients');
+        }, 'del')
+      ]));
+    });
+    const nIn = textIn('', () => {}, {max: 40, wide: true, placeholder: 'Add a nutrient or supplement', label: 'New nutrient'});
+    const addN = () => {
+      const name = nIn.value.trim(); if(!name) return;
+      if(Object.values(getNutrientDefinitions()).some(v => v.toLowerCase() === name.toLowerCase())){ flash('That one is already on the list.', 'warn'); return; }
+      state.customNutrients.push({id: 'custom_' + Date.now(), name});
+      render(); queueSave(); rebuildSection('nutrients');
+    };
+    nIn.addEventListener('keydown', e => { if(e.key === 'Enter') addN(); });
+    list.append(el('div', {class: 'set-li add'}, [nIn, smallBtn('Add', addN)]));
+    body.append(
+      row('Your nutrients', 'Rename or remove any of them. "Core" ones are the ones that count for a successful day.', list, {stack: true}),
+      row('XP per nutrient', '', numIn(SET.nutrients.xp, v => setS('nutrients.xp', v), {min: 0, max: 1000, suffix: 'XP', label: 'XP per nutrient'}))
+    );
+    if((SET.nutrients.removed || []).length) body.append(row('Removed defaults', 'Bring back the default nutrients you removed.', smallBtn('Bring them back', () => { setS('nutrients.removed', []); rebuildSection('nutrients'); })));
+    sectionReset(body, 'Reset nutrient settings', () => { resetS('nutrients'); setS('rules.core', SETTINGS_DEFAULTS.rules.core); rebuildSection('nutrients'); });
+  },
+
+  // ---------------- Water ----------------
+  water(body){
+    body.append(
+      row('Daily goal', '', numIn(waterGoal(), async v => { state.waterGoal = v; await saveDailySnapshot([collectDailyGoals().find(x => x.id === 'water')]); }, {min: 1, max: 20, suffix: 'glasses', label: 'Daily water goal'})),
+      row('Glass size', 'Used to show how much you drank in total.', el('span', {class: 'set-pair'}, [
+        numIn(SET.water.glassSize, v => setS('water.glassSize', v), {min: 1, max: 5000, label: 'Glass size'}),
+        segIn([['ml', 'ml'], ['oz', 'oz']], SET.water.unit, v => setS('water.unit', v))
+      ])),
+      row('XP for hitting the goal', '', numIn(SET.water.xp, v => setS('water.xp', v), {min: 0, max: 1000, suffix: 'XP', label: 'Water XP'}))
+    );
+    sectionReset(body, 'Reset water settings', () => { resetS('water'); state.waterGoal = 8; render(); queueSave(); rebuildSection('water'); });
+  },
+
+  // ---------------- Sleep ----------------
+  sleep(body){
+    body.append(
+      row('Target', '', numIn(SET.sleep.target, v => setS('sleep.target', v), {min: 1, max: 14, step: .5, suffix: 'hours', label: 'Sleep target'})),
+      row('Sleep counts as done when', '', segIn([['target', 'I reach the target'], ['logged', 'I just log it']], SET.sleep.mode, v => setS('sleep.mode', v))),
+      row('XP', '', numIn(SET.sleep.xp, v => setS('sleep.xp', v), {min: 0, max: 1000, suffix: 'XP', label: 'Sleep XP'}))
+    );
+    sectionReset(body, 'Reset sleep settings', () => { resetS('sleep'); rebuildSection('sleep'); });
+  },
+
+  // ---------------- Weight ----------------
+  weight(body){
+    body.append(
+      row('Unit', 'Your logged weights are converted, nothing gets lost.', segIn([['kg', 'kg'], ['lb', 'lb']], wUnit(), v => { setS('weight.unit', v); rebuildSection('weight'); })),
+      row('Goal weight', 'Shows a goal line on the weight chart and how much is left. Leave empty for none.', numIn(SET.weight.goal === null || SET.weight.goal === undefined ? null : wShow(SET.weight.goal), v => setS('weight.goal', v === null ? null : wToKg(v)), {min: 1, max: 1000, step: .1, allowEmpty: true, suffix: wUnit(), placeholder: 'none', label: 'Goal weight'})),
+      row('XP for logging', '', numIn(SET.weight.xp, v => setS('weight.xp', v), {min: 0, max: 1000, suffix: 'XP', label: 'Weight XP'}))
+    );
+    sectionReset(body, 'Reset weight settings', () => { resetS('weight'); rebuildSection('weight'); });
+  },
+
+  // ---------------- School ----------------
+  school(body){
+    const wrap = el('div', {class: 'set-list'});
+    if(!state.subjects.length) wrap.append(el('div', {class: 'set-empty', text: 'No subjects yet. Add one below.'}));
+    state.subjects.forEach(subject => {
+      const goals = el('div', {class: 'set-sublist'});
+      subject.topics.forEach(t => goals.append(el('div', {class: 'set-li'}, [
+        textIn(t.text, v => { if(!v) return; t.text = v; render(); queueSave(); }, {max: 80, wide: true, label: 'Goal'}),
+        numIn(Number(t.xp ?? 10), v => { t.xp = v; render(); queueSave(); }, {min: 0, max: 1000, suffix: 'XP', label: 'Goal XP'}),
+        iconBtn(ICON_X, 'Delete goal', async () => { await deleteTopic(t.id); rebuildSection('school'); }, 'del')
+      ])));
+      const gIn = textIn('', () => {}, {max: 80, wide: true, placeholder: 'Add a goal', label: 'New goal for ' + subject.name});
+      const addG = async () => { const v = gIn.value.trim(); if(!v) return; subject.topics.push({id: 't' + Date.now() + Math.random().toString(16).slice(2, 6), text: v, done: false, xp: 10}); await saveState(); render(); rebuildSection('school'); };
+      gIn.addEventListener('keydown', e => { if(e.key === 'Enter') addG(); });
+      goals.append(el('div', {class: 'set-li add'}, [gIn, smallBtn('Add', addG)]));
+      wrap.append(el('div', {class: 'set-subject'}, [
+        el('div', {class: 'set-li head'}, [
+          textIn(subject.name, v => { if(!v) return; subject.name = v; render(); queueSave(); }, {max: 40, wide: true, label: 'Subject name'}),
+          numIn(Math.max(0, Number(subject.xp) || 0), v => { subject.xp = v; render(); queueSave(); }, {min: 0, max: 1000, suffix: 'bonus', label: 'Subject bonus XP'}),
+          confirmBtn('Delete', 'Sure?', async () => { await deleteSubject(subject.id); rebuildSection('school'); })
+        ]),
+        goals
+      ]));
+    });
+    const sIn = textIn('', () => {}, {max: 40, wide: true, placeholder: 'New subject, e.g. Maths', label: 'New subject'});
+    const addS = async () => { const v = sIn.value.trim(); if(!v) return; state.subjects.push({id: 's' + Date.now(), name: v, xp: 10, topics: []}); await saveState(); render(); rebuildSection('school'); };
+    sIn.addEventListener('keydown', e => { if(e.key === 'Enter') addS(); });
+    wrap.append(el('div', {class: 'set-li add'}, [sIn, smallBtn('Add subject', addS)]));
+    body.append(row('Subjects & goals', 'Rename subjects, edit goals and their XP, and set the bonus for finishing a whole subject.', wrap, {stack: true}));
+  },
+
+  // ---------------- XP & rules ----------------
+  xp(body){
+    const succ = new Set(SET.rules.success);
+    const succBox = el('div', {class: 'set-checks'});
+    Object.entries(SUCCESS_HABITS).forEach(([k, h]) => succBox.append(el('label', {class: 'set-check'}, [
+      toggleIn(succ.has(k), v => { const s = new Set(SET.rules.success); if(v) s.add(k); else s.delete(k); const arr = Object.keys(SUCCESS_HABITS).filter(x => s.has(x)); setS('rules.success', arr); if(SET.rules.need > Math.max(1, arr.length)) setS('rules.need', Math.max(1, arr.length)); rebuildSection('xp'); }, h.label),
+      el('span', {text: h.label})
+    ])));
+    const perf = new Set(SET.rules.perfect);
+    const perfBox = el('div', {class: 'set-checks'});
+    Object.entries(PERFECT_SECTIONS).forEach(([k, t]) => perfBox.append(el('label', {class: 'set-check'}, [
+      toggleIn(perf.has(k), v => { const s = new Set(SET.rules.perfect); if(v) s.add(k); else s.delete(k); setS('rules.perfect', Object.keys(PERFECT_SECTIONS).filter(x => s.has(x))); rebuildSection('xp'); }, t),
+      el('span', {text: t.charAt(0).toUpperCase() + t.slice(1)})
+    ])));
+    const n = Math.max(1, SET.rules.success.length);
+    body.append(
+      row('XP per level', '', numIn(SET.xp.perLevel, v => setS('xp.perLevel', v), {min: 10, max: 100000, suffix: 'XP', label: 'XP per level'})),
+      row('Check-in XP', '', numIn(SET.xp.checkin, v => setS('xp.checkin', v), {min: 0, max: 1000, suffix: 'XP', label: 'Check-in XP'})),
+      row('What counts toward a successful day', 'Successful days build your streak.', succBox, {stack: true, keywords: 'streak'}),
+      row('How many of them you need', '', numIn(Math.min(SET.rules.need, n), v => { setS('rules.need', v); rebuildSection('xp'); }, {min: 1, max: n, suffix: 'of ' + SET.rules.success.length, label: 'How many needed'})),
+      note(successRuleText(), 'rule'),
+      row('What a perfect day includes', 'A perfect day is when the ring at the top reaches 100%.', perfBox, {stack: true}),
+      note(perfectRuleText(), 'rule')
+    );
+    sectionReset(body, 'Reset XP & rules', () => { resetS('xp'); resetS('rules'); rebuildSection('xp'); });
+  },
+
+  // ---------------- Badges ----------------
+  badges(body){
+    const list = el('div', {class: 'set-list badges'});
+    BADGES.forEach(b => {
+      list.append(el('div', {class: 'set-li badge-li'}, [
+        el('span', {class: 'set-medal', html: b.icon}),
+        el('span', {class: 'set-li-name'}, [el('b', {text: b.name}), el('small', {text: b.desc(badgeGoal(b))})]),
+        numIn(badgeGoal(b), v => { const t = {...(SET.badges.targets || {})}; if(v === b.goal) delete t[b.id]; else t[b.id] = v; setS('badges.targets', t); rebuildSection('badges'); }, {min: 1, max: 100000, label: b.name + ' target'})
+      ]));
+    });
+    body.append(
+      row('Show the Badges tab', '', toggleIn(SET.badges.enabled, v => setS('badges.enabled', v), 'Show the Badges tab')),
+      row('Unlock pop-ups', 'The message (and confetti, if it is on) when you unlock a badge.', toggleIn(SET.badges.popups, v => setS('badges.popups', v), 'Unlock pop-ups')),
+      row('Badge targets', 'Change what each badge needs. The text and progress update with it.', list, {stack: true, keywords: BADGES.map(b => b.name).join(' ')})
+    );
+    sectionReset(body, 'Reset badge settings', () => { resetS('badges'); rebuildSection('badges'); });
+  },
+
+  // ---------------- Look & themes (device) ----------------
+  look(body){
+    const themeOpts = allThemeIds().map(id => [id, themeInfo(id).label]);
+    const sched = el('div', {class: 'set-list sched'});
+    const slots = (DEV.schedule || []).slice().sort((a, b) => minutesOf(a.start) - minutesOf(b.start));
+    slots.forEach((slot, i) => {
+      const t = el('input', {type: 'time', value: slot.start, 'aria-label': 'Starts at'});
+      t.addEventListener('change', () => { if(!t.value) return; slots[i].start = t.value; setD('schedule', slots); rebuildSection('look'); });
+      sched.append(el('div', {class: 'set-li'}, [
+        el('span', {class: 'set-li-name', text: 'From'}), t,
+        selectIn(themeOpts, themeInfo(slot.theme) ? slot.theme : 'day', v => { slots[i].theme = v; setD('schedule', slots); }, 'Scene'),
+        iconBtn(ICON_X, 'Remove time', () => { if(slots.length <= 1){ flash('Keep at least one time in the schedule.', 'warn'); return; } slots.splice(i, 1); setD('schedule', slots); rebuildSection('look'); }, 'del')
+      ]));
+    });
+    sched.append(el('div', {class: 'set-li add'}, smallBtn('Add a time', () => { slots.push({start: '12:00', theme: 'day'}); setD('schedule', slots); rebuildSection('look'); })));
+    const alphaDefault = DEV.cardAlpha === null || DEV.cardAlpha === undefined || DEV.cardAlpha === '';
+    body.append(
+      row('Theme', 'Auto follows the schedule below. You can also tap the theme button at the top.', selectIn([['auto', 'Auto (schedule)']].concat(themeOpts), themeMode, v => setThemeMode(v), 'Theme')),
+      row('Auto schedule', 'Each scene starts at its time and runs until the next one.', sched, {stack: true, keywords: 'time alabasta wano water 7'}),
+      row('Background motion', 'Calm hides petals, embers, ships and other moving bits. Off freezes everything.', segIn([['full', 'Full'], ['calm', 'Calm'], ['off', 'Off']], DEV.motion, v => setD('motion', v))),
+      row('Darken the background', 'Makes the cards easier to read on busy backgrounds.', rangeIn(Math.round((DEV.dim || 0) * 100), 0, 70, 5, (v, done) => { DEV.dim = v / 100; applyDeviceLook(); if(done) saveDev(); }, v => v + '%')),
+      row('Card see-through', alphaDefault ? 'Using the theme default.' : 'Lower is more see-through.', el('span', {class: 'set-pair'}, [
+        rangeIn(Math.round((alphaDefault ? .7 : DEV.cardAlpha) * 100), 30, 100, 5, (v, done) => { DEV.cardAlpha = v / 100; applyDeviceLook(); if(done){ saveDev(); rebuildSection('look'); } }, v => v + '%'),
+        alphaDefault ? null : smallBtn('Default', () => { setD('cardAlpha', null); rebuildSection('look'); })
+      ])),
+      row('Accent color', DEV.accent ? 'Your own color.' : 'Using each theme\'s own gold.', el('span', {class: 'set-pair'}, [
+        colorIn(DEV.accent || getComputedStyle(document.body).getPropertyValue('--amber').trim() || '#ffb020', v => { setD('accent', v); rebuildSection('look'); }, 'Accent color'),
+        DEV.accent ? smallBtn('Theme colors', () => { setD('accent', ''); rebuildSection('look'); }) : null
+      ])),
+      row('Text size', '', segIn([['small', 'Small'], ['normal', 'Normal'], ['large', 'Large']], DEV.textSize, v => setD('textSize', v))),
+      row('Confetti', 'When you finish every goal or unlock a badge.', toggleIn(DEV.confetti, v => setD('confetti', v), 'Confetti'))
+    );
+    sectionReset(body, 'Reset look & themes', () => {
+      ['schedule', 'motion', 'dim', 'cardAlpha', 'accent', 'textSize', 'confetti'].forEach(k => { DEV[k] = cloneJSON(DEV_DEFAULTS[k]); });
+      saveDev(); setThemeMode('auto'); rebuildSection('look');
+    });
+  },
+
+  // ---------------- Backgrounds (device) ----------------
+  backgrounds(body){
+    const builtin = el('div', {class: 'bg-grid builtin'});
+    [['day', 'Alabasta', 'linear-gradient(180deg,#2f7fd8,#8cc6f2 55%,#f0cf8a)'], ['evening', 'Wano', 'linear-gradient(180deg,#2c2468,#a43e78 50%,#ffa45a)'], ['night', 'Water 7', 'linear-gradient(180deg,#071640,#1a4a8e 60%,#2a66a8)']].forEach(([id, name, grad]) => {
+      builtin.append(el('div', {class: 'bg-card' + (activeTheme === id ? ' current' : '')}, [
+        el('div', {class: 'bg-thumb', style: 'background:' + grad}),
+        el('div', {class: 'bg-meta'}, [el('b', {text: name}), el('small', {text: 'Built-in scene'})]),
+        smallBtn(activeTheme === id && themeMode !== 'auto' ? 'In use' : 'Use now', () => { setThemeMode(id); rebuildSection('backgrounds'); })
+      ]));
+    });
+    const mine = el('div', {class: 'bg-grid'});
+    if(!BG_LIST.length) mine.append(el('div', {class: 'set-empty', text: 'No backgrounds of your own yet.'}));
+    BG_LIST.forEach(bg => {
+      const thumb = el('div', {class: 'bg-thumb'});
+      bgUrl(bg.id).then(url => {
+        if(!url){ thumb.classList.add('broken'); thumb.textContent = 'File missing'; return; }
+        thumb.append(bg.kind === 'video' ? el('video', {src: url, muted: true, preload: 'metadata', playsinline: true}) : el('img', {src: url, alt: ''}));
+        const v = thumb.querySelector('video'); if(v) v.muted = true;
+      });
+      const id = 'bg:' + bg.id;
+      mine.append(el('div', {class: 'bg-card' + (activeTheme === id ? ' current' : '')}, [
+        thumb,
+        el('div', {class: 'bg-meta'}, [
+          textIn(bg.name, v => { bg.name = (v || 'Background').slice(0, 30); saveBgMeta(); applyTheme(); }, {max: 30, label: 'Background name'}),
+          el('small', {text: (bg.kind === 'video' ? 'Video' : 'Picture') + ' · ' + fmtBytes(bg.size)})
+        ]),
+        el('div', {class: 'bg-opts'}, [
+          segIn([['cover', 'Fill'], ['contain', 'Fit']], bg.fit || 'cover', v => { bg.fit = v; saveBgMeta(); applyTheme(); }),
+          selectIn([['night', 'Water 7 colors'], ['evening', 'Wano colors'], ['day', 'Alabasta colors'], ['classic', 'Classic colors']], bg.palette || 'night', v => { bg.palette = v; saveBgMeta(); applyTheme(); }, 'Card colors')
+        ]),
+        el('div', {class: 'bg-actions'}, [
+          smallBtn(activeTheme === id && themeMode !== 'auto' ? 'In use' : 'Use now', () => { setThemeMode(id); rebuildSection('backgrounds'); }),
+          confirmBtn('Remove', 'Tap again', () => removeBackground(bg.id))
+        ])
+      ]));
+    });
+    const file = el('input', {type: 'file', multiple: true, class: 'hidden', accept: BG_ACCEPT});
+    file.addEventListener('change', () => { addBackgroundFiles([...file.files]); file.value = ''; });
+    const usage = el('small', {class: 'bg-usage'});
+    if(navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { usage.textContent = 'Storage used on this device: ' + fmtBytes(e.usage || 0) + (e.quota ? ' of about ' + fmtBytes(e.quota) : ''); }).catch(() => {});
+    body.append(
+      row('Built-in scenes', 'These can\'t be removed.', builtin, {stack: true, keywords: 'alabasta wano water 7'}),
+      row('Your backgrounds', 'Pictures and videos stay on this device (they are too big for the cloud sync). Pick them as a theme or use them in the auto schedule.', mine, {stack: true, keywords: 'picture video photo image upload'}),
+      el('div', {class: 'bg-add'}, [
+        el('button', {type: 'button', class: 'btn', text: '+ Add pictures or videos', onclick: () => file.click()}),
+        file,
+        el('small', {text: 'JPG, PNG, GIF, WebP, AVIF, SVG, BMP, HEIC (Safari) · MP4, WebM, MOV, M4V, OGG. Videos play muted and on a loop.'}),
+        usage
+      ])
+    );
+  },
+
+  // ---------------- Sound & feel (device) ----------------
+  sound(body){
+    body.append(
+      row('Onigashima roar', 'The growl when you wake Onigashima in the Wano theme.', toggleIn(DEV.sound, v => { setD('sound', v); rebuildSection('sound'); }, 'Onigashima roar')),
+      DEV.sound ? row('Roar volume', '', rangeIn(Math.round((DEV.volume ?? .9) * 100), 0, 100, 5, (v, done) => { DEV.volume = v / 100; if(done) saveDev(); }, v => v + '%')) : null,
+      row('Onigashima easter egg', 'Lets you click Onigashima (or "· wano") to start the battle.', toggleIn(DEV.easterEgg, v => setD('easterEgg', v), 'Onigashima easter egg')),
+      row('Vibration', 'Little buzzes when you tick things off (phones only).', toggleIn(DEV.vibration, v => setD('vibration', v), 'Vibration')),
+      row('+XP pop-ups', 'The small "+15 XP" messages in the corner.', toggleIn(DEV.xpPopups, v => setD('xpPopups', v), '+XP pop-ups'))
+    );
+    sectionReset(body, 'Reset sound & feel', () => { ['sound', 'volume', 'easterEgg', 'vibration', 'xpPopups'].forEach(k => { DEV[k] = cloneJSON(DEV_DEFAULTS[k]); }); saveDev(); applyTheme(); rebuildSection('sound'); });
+  },
+
+  // ---------------- Sync & data ----------------
+  data(body){
+    const code = el('code', {class: 'sync-code', text: syncCode || '—'});
+    const imp = el('input', {type: 'file', accept: '.json,application/json', class: 'hidden'});
+    const impBox = el('div', {class: 'imp-box hidden'});
+    imp.addEventListener('change', async () => {
+      const f = imp.files[0]; imp.value = '';
+      if(!f) return;
+      try{
+        const data = JSON.parse(await f.text());
+        const st = data && data.state;
+        if(!st || typeof st !== 'object' || !st.dailyLogs) throw new Error('not a backup');
+        const days = Object.keys(st.dailyLogs).length;
+        impBox.innerHTML = '';
+        impBox.append(
+          el('p', {text: 'Backup from ' + (data.exportedAt ? new Date(data.exportedAt).toLocaleString() : 'an unknown date') + ' with ' + days + ' logged days and ' + (st.totalXP || 0) + ' XP. Importing replaces everything in this log.'}),
+          el('div', {class: 'set-pair'}, [
+            confirmBtn('Replace my log', 'Tap again to replace', async () => {
+              state = cloneJSON(st); migrateState(); await saveState(); render();
+              if(data.device && typeof data.device === 'object'){ DEV = Object.assign(cloneJSON(DEV_DEFAULTS), data.device); saveDev(); applyTheme(); }
+              flash('Backup imported.'); renderSettings();
+            }),
+            smallBtn('Cancel', () => impBox.classList.add('hidden'))
+          ])
+        );
+        impBox.classList.remove('hidden');
+      } catch(e){ flash('That file isn\'t a Training Log backup.', 'warn'); }
+    });
+    body.append(
+      row('Your sync code', 'Type this code on another device to see the same log. Keep it private, it works like a password.', el('span', {class: 'set-pair'}, [
+        code,
+        smallBtn('Copy', () => { (navigator.clipboard ? navigator.clipboard.writeText(syncCode) : Promise.reject()).then(() => flash('Sync code copied.')).catch(() => flash('Couldn\'t copy, select it by hand.', 'warn')); })
+      ])),
+      row('Switch device or code', 'Connect this device to a different code or create a new one.', smallBtn('Open device sync', () => document.getElementById('changeSyncBtn').click())),
+      row('Export a backup', 'Downloads your whole log and settings as a file. Your own background files aren\'t included.', smallBtn('Export', exportBackup)),
+      row('Import a backup', 'Restore from a file you exported earlier.', el('span', {}, [smallBtn('Choose file', () => imp.click()), imp])),
+      impBox,
+      el('div', {class: 'set-danger'}, [
+        el('b', {text: 'Reset'}),
+        el('small', {text: 'Each button asks you to tap it a second time before it does anything.'}),
+        el('div', {class: 'set-danger-btns'}, [
+          confirmBtn('Today only', 'Tap again: clear today', resetToday),
+          confirmBtn('XP & badges', 'Tap again: reset XP', resetXpBadges),
+          confirmBtn('Custom texts', 'Tap again: reset texts', resetTexts),
+          confirmBtn('All settings', 'Tap again: reset settings', resetAllSettings),
+          confirmBtn('Everything', 'Tap again: erase all', async () => { state = defaultState(); refreshSettings(); await saveState(); render(); flash('Everything was reset.'); renderSettings(); })
+        ])
+      ])
+    );
+  },
+
+  // ---------------- About ----------------
+  about(body){
+    body.append(
+      row('Version', '', el('span', {class: 'set-val', text: 'Training Log ' + APP_VERSION})),
+      row('Project page', 'Readme, screenshots and how it all works.', el('span', {class: 'set-pair'}, [
+        el('a', {class: 'btn ghost small', href: REPO_URL, target: '_blank', rel: 'noopener', text: 'GitHub'}),
+        el('a', {class: 'btn ghost small', href: REPO_URL + '#readme', target: '_blank', rel: 'noopener', text: 'Readme'})
+      ])),
+      note('A fan project. One Piece belongs to Eiichiro Oda, Shueisha and Toei Animation.')
+    );
+  }
+};
+
+// ----- data actions -----
+function fmtBytes(n){
+  n = Number(n) || 0;
+  if(n < 1024) return n + ' B';
+  if(n < 1048576) return (n / 1024).toFixed(0) + ' KB';
+  if(n < 1073741824) return (n / 1048576).toFixed(1) + ' MB';
+  return (n / 1073741824).toFixed(2) + ' GB';
+}
+function exportBackup(){
+  const data = {app: 'winter-arc-training-log', version: APP_VERSION, exportedAt: new Date().toISOString(), state, device: DEV, theme: themeMode};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const a = el('a', {href: URL.createObjectURL(blob), download: 'training-log-backup-' + todayStr() + '.json'});
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  flash('Backup downloaded.');
+}
+async function resetToday(){
+  const day = todayStr();
+  const log = state.goalHistory[day];
+  (log && log.entries || []).forEach(e => {
+    const xp = Number(e.xpEarned) || 0;
+    state.totalXP = Math.max(0, state.totalXP - xp);
+    if(String(e.id).startsWith('quest:')){
+      const q = state.questTemplates.find(x => x.id === e.id.slice(6));
+      if(q) state.stats[q.cat] = Math.max(0, (state.stats[q.cat] || 0) - xp);
+    }
+  });
+  delete state.goalHistory[day];
+  delete state.dailyLogs[day];
+  await saveState(); render(); flash('Today was cleared.');
+}
+async function resetXpBadges(){
+  state.totalXP = 0;
+  state.stats = {strength: 0, endurance: 0, speed: 0, flex: 0};
+  state.badges = undefined;            // re-checked quietly against the log
+  migrateState();
+  await saveState(); render(); flash('XP and badges were reset.');
+}
+async function resetTexts(){
+  state.customGreeting = ''; state.customQuote = '';
+  if(state.settings){ delete state.settings.profile; if(state.settings.challenge) delete state.settings.challenge.name; }
+  refreshSettings(); await saveState(); render(); flash('Custom texts were reset.'); renderSettings();
+}
+async function resetAllSettings(){
+  delete state.settings;
+  DEV = cloneJSON(DEV_DEFAULTS); saveDev();
+  refreshSettings(); await saveState(); render(); setThemeMode('auto'); flash('All settings are back to default.'); renderSettings();
+}
+
+// ----- backgrounds -----
+const BG_ACCEPT = 'image/*,video/*,.jpg,.jpeg,.jfif,.png,.apng,.gif,.webp,.avif,.bmp,.svg,.ico,.heic,.heif,.tif,.tiff,.mp4,.m4v,.mov,.webm,.ogv,.ogg,.mkv,.3gp';
+const IMG_EXT = ['jpg', 'jpeg', 'jfif', 'png', 'apng', 'gif', 'webp', 'avif', 'bmp', 'svg', 'ico', 'heic', 'heif', 'tif', 'tiff'];
+const VID_EXT = ['mp4', 'm4v', 'mov', 'webm', 'ogv', 'ogg', 'mkv', '3gp', 'avi', 'wmv', 'flv'];
+function fileKind(f){
+  if((f.type || '').startsWith('image/')) return 'image';
+  if((f.type || '').startsWith('video/')) return 'video';
+  const ext = (f.name.split('.').pop() || '').toLowerCase();
+  if(IMG_EXT.includes(ext)) return 'image';
+  if(VID_EXT.includes(ext)) return 'video';
+  return null;
+}
+function canDisplay(file, kind){
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const done = ok => { clearTimeout(t); URL.revokeObjectURL(url); resolve(ok); };
+    const t = setTimeout(() => done(kind === 'video'), 12000);
+    if(kind === 'image'){ const i = new Image(); i.onload = () => done(true); i.onerror = () => done(false); i.src = url; }
+    else { const v = document.createElement('video'); v.muted = true; v.preload = 'metadata'; v.onloadedmetadata = () => done(true); v.onerror = () => done(false); v.src = url; }
+  });
+}
+async function addBackgroundFiles(files){
+  if(!files.length) return;
+  let added = 0;
+  for(const f of files){
+    const kind = fileKind(f);
+    const ext = (f.name.split('.').pop() || '').toUpperCase();
+    if(!kind){ flash(f.name + ' isn\'t a picture or video.', 'warn'); continue; }
+    flash('Adding ' + f.name + '…');
+    if(!(await canDisplay(f, kind))){ flash('Couldn\'t open ' + f.name + '. It may be damaged, or this browser can\'t show ' + ext + ' files (' + (kind === 'video' ? 'MP4 and WebM' : 'JPG, PNG and WebP') + ' always work).', 'warn'); continue; }
+    const id = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    try{ await bgPut(id, f); }
+    catch(e){ flash('There isn\'t enough space on this device for ' + f.name + '.', 'warn'); continue; }
+    BG_LIST.push({id, name: (f.name.replace(/\.[^.]+$/, '') || 'Background').slice(0, 30), kind, type: f.type, size: f.size, fit: 'cover', palette: 'night', added: Date.now()});
+    added++;
+  }
+  saveBgMeta();
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  if(added) flash(added === 1 ? 'Background added. Tap "Use now" to try it.' : added + ' backgrounds added.');
+  rebuildSection('backgrounds');
+  rebuildSection('look');
+}
+async function removeBackground(id){
+  try{ await bgDel(id); } catch(e){}
+  if(bgUrls[id]){ URL.revokeObjectURL(bgUrls[id]); delete bgUrls[id]; }
+  BG_LIST = BG_LIST.filter(b => b.id !== id);
+  saveBgMeta();
+  DEV.schedule = (DEV.schedule || []).filter(s => s.theme !== 'bg:' + id);
+  if(!DEV.schedule.length) DEV.schedule = cloneJSON(DEV_DEFAULTS.schedule);
+  saveDev();
+  if(themeMode === 'bg:' + id) setThemeMode('auto'); else applyTheme();
+  flash('Background removed.');
+  rebuildSection('backgrounds');
+  rebuildSection('look');
+}
+
+// ----- applied on every render: synced look of the Today page -----
+function applySyncedLook(){
+  const order = SET.layout.order;
+  document.querySelectorAll('#tab-today [data-section]').forEach(n => {
+    const k = n.dataset.section;
+    n.style.order = String(order.indexOf(k) + 1);
+    n.classList.toggle('hidden', !!SET.layout.hidden[k]);
+  });
+  const tl = document.getElementById('topLabel'); if(tl) tl.textContent = SET.profile.topLabel || 'winter arc';
+  const wi = document.getElementById('weightInput'); if(wi) wi.placeholder = wUnit();
+  const qc = document.getElementById('questCategory');
+  if(qc) [...qc.options].forEach(o => { if(CATS[o.value]) o.textContent = CATS[o.value].label; });
+  const bn = document.querySelector('.bottom-nav [data-tab="badges"]');
+  if(bn) bn.classList.toggle('hidden', !SET.badges.enabled);
+  if(!SET.badges.enabled && currentTab === 'badges') showTab('today');
+}
+let firstTabApplied = false;
+function applyFirstTab(){
+  if(firstTabApplied) return;
+  firstTabApplied = true;
+  const ft = SET.layout.firstTab;
+  if(ft && ft !== 'last' && ft !== currentTab) showTab(ft, true);
+}
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  if(currentTab === 'settings') showTab(lastMainTab);
+  else showTab('settings');
+});
+
 // ----- Wiring for the new features -----
 document.getElementById('badgeGrid').addEventListener('click', e => {
   const card = e.target.closest('[data-badge]');
@@ -3718,8 +5069,9 @@ document.addEventListener('click', (e) => {
       const wake = document.getElementById('sleepWake').value;
       logGoalById(id).then(() => {
         const hours = bed && wake ? computeSleepHours(bed, wake) : 0;
-        const xp = bed && wake && hours >= 8 ? 5 : 0;
-        const result = !bed || !wake ? 'enter both times' : hours.toFixed(1) + ' hrs · ' + (hours >= 8 ? 'goal reached' : '8 hrs needed');
+        const tgt = SET.sleep.target;
+        const xp = bed && wake && (SET.sleep.mode === 'logged' || hours >= tgt) ? SET.sleep.xp : 0;
+        const result = !bed || !wake ? 'enter both times' : hours.toFixed(1) + ' hrs · ' + (hours >= tgt ? 'goal reached' : tgt + ' hrs needed');
         showLogToast('Sleep logged · ' + result + ' · ' + xp + ' XP');
       });
     } else if(id === 'weight') {
@@ -3769,6 +5121,7 @@ document.getElementById('closeHistoryBtn').addEventListener('click', () => docum
 document.getElementById('historyModal').addEventListener('click', e => { if(e.target.id === 'historyModal') e.currentTarget.classList.add('hidden'); });
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
+  if(currentTab === 'settings' && !document.querySelector('.modal-overlay:not(.hidden)') && !(e.target && e.target.matches && e.target.matches('input, select, textarea'))) showTab(lastMainTab);
   document.getElementById('historyModal').classList.add('hidden');
   document.getElementById('badgeModal').classList.add('hidden');
   if(syncCode) document.getElementById('syncModal').classList.add('hidden');
@@ -3790,8 +5143,7 @@ initSync();
 (function updateArcProgressDateLabel() {
   const label = document.getElementById('arcProgressDateLabel');
   if (!label) return;
-  const now = new Date();
-  label.textContent = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+  label.textContent = fmtDate(todayStr());
 })();
 </script>
 
