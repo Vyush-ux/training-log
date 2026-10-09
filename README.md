@@ -20,6 +20,7 @@ I made this to keep myself on track during my winter arc (Oct 1 to Feb 28). It's
 - A quick check-in where you pick your mood and write a line about your day
 - Little streak counters (like `9d`) next to anything you've done a few days in a row
 - A log history with everything from every day
+- You can long-press the greeting or the quote at the top to write your own. Hold it, let go, type, press Enter. If you delete the text it goes back to the normal one
 
 **Insights tab**
 - My streak, best streak, success rate, perfect days, level and average sleep

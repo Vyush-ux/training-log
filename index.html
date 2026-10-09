@@ -999,6 +999,18 @@
     75%{ transform: translate(5vw, 81vh) rotate(-370deg); }
     100%{ transform: translate(2vw, 108vh) rotate(-500deg); }
   }
+
+  /* long-press to edit the greeting / quote */
+  #greeting, #dailyLine{ -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; transition: opacity .2s ease, transform .2s ease; }
+  #greeting.pressing, #dailyLine.pressing{ opacity: .72; transform: scale(.985); }
+  #greeting.armed, #dailyLine.armed{ opacity: 1; animation: armPulse .3s ease-out; }
+  @keyframes armPulse{ 0%{ transform: scale(.985); } 50%{ transform: scale(1.02); } 100%{ transform: scale(1); } }
+  #greeting.is-editing, #dailyLine.is-editing{ -webkit-user-select: text; user-select: text; }
+  .inline-edit{
+    font: inherit; color: inherit; letter-spacing: inherit; font-style: inherit;
+    width: 100%; padding: 1px 6px; margin: -1px -6px; border: none; outline: none; border-radius: 6px;
+    background: rgba(255, 255, 255, .08); box-shadow: inset 0 -2px 0 var(--amber);
+  }
 </style>
 </head>
 <body class="theme-night">
@@ -1925,8 +1937,8 @@ function render(){
   } else {
     dayCountEl.textContent = 'Day ' + dayNum + ' / ' + ARC_TOTAL_DAYS;
   }
-  document.getElementById('greeting').textContent = greetingText();
-  document.getElementById('dailyLine').textContent = DAILY_LINES[((dayNum % DAILY_LINES.length) + DAILY_LINES.length) % DAILY_LINES.length];
+  if(editingText !== 'customGreeting') document.getElementById('greeting').textContent = customText('customGreeting') || greetingText();
+  if(editingText !== 'customQuote') document.getElementById('dailyLine').textContent = customText('customQuote') || DAILY_LINES[((dayNum % DAILY_LINES.length) + DAILY_LINES.length) % DAILY_LINES.length];
   renderTodayRing(today);
   renderWeekStrip();
 
@@ -3587,6 +3599,70 @@ document.getElementById('onigashima').addEventListener('click', startBattle);
 document.getElementById('placeName').addEventListener('click', () => {
   if(document.body.classList.contains('theme-evening')) startBattle();
 });
+
+
+// ----- Long-press the greeting or the daily quote to write your own -----
+// Hold ~half a second (the text dims, then pulses), let go, type, press Enter.
+// An empty text brings the automatic one back. Saved in the synced log.
+let editingText = null;
+function customText(key){ return (state && typeof state[key] === 'string') ? state[key].trim() : ''; }
+
+function startTextEdit(el, key, maxLen, label){
+  if(editingText || !state) return;
+  editingText = key;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'inline-edit';
+  input.value = customText(key) || el.textContent;
+  input.maxLength = maxLen;
+  input.setAttribute('aria-label', label);
+  input.setAttribute('enterkeyhint', 'done');
+  el.classList.add('is-editing');
+  el.textContent = '';
+  el.appendChild(input);
+  input.focus();
+  input.select();
+  let done = false;
+  const finish = async save => {
+    if(done) return;
+    done = true;
+    const value = input.value.trim();
+    el.classList.remove('is-editing');
+    editingText = null;
+    if(save && value !== customText(key)){
+      state[key] = value;
+      render();
+      await saveState();
+    } else {
+      render();
+    }
+  };
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
+    else if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
+  });
+  input.addEventListener('blur', () => finish(true));
+}
+
+function onLongPress(el, handler, ms = 550){
+  let timer = null, armed = false, sx = 0, sy = 0;
+  const reset = () => { clearTimeout(timer); timer = null; armed = false; el.classList.remove('pressing', 'armed'); };
+  el.addEventListener('pointerdown', e => {
+    if(editingText || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    sx = e.clientX; sy = e.clientY;
+    el.classList.add('pressing');
+    timer = setTimeout(() => { timer = null; armed = true; el.classList.add('armed'); buzz(15); }, ms);
+  });
+  el.addEventListener('pointermove', e => { if((timer || armed) && Math.hypot(e.clientX - sx, e.clientY - sy) > 12) reset(); });
+  // open the editor on release: phones only show the keyboard for a real tap/release
+  el.addEventListener('pointerup', () => { const go = armed; reset(); if(go) handler(); });
+  el.addEventListener('pointercancel', reset);
+  el.addEventListener('pointerleave', () => { if(!armed) reset(); });
+  el.addEventListener('contextmenu', e => { if(!editingText) e.preventDefault(); });
+}
+
+onLongPress(document.getElementById('greeting'), () => startTextEdit(document.getElementById('greeting'), 'customGreeting', 48, 'Your greeting'));
+onLongPress(document.getElementById('dailyLine'), () => startTextEdit(document.getElementById('dailyLine'), 'customQuote', 140, 'Your quote'));
 
 // ----- Wiring for the new features -----
 document.getElementById('badgeGrid').addEventListener('click', e => {
