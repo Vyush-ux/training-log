@@ -1164,6 +1164,10 @@
   .sched input[type=time]{ flex-shrink: 0; }
   .bg-add{ display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-top: 12px; }
   .bg-add small{ font-size: 11.5px; color: var(--text-faint); line-height: 1.5; }
+  .set-li.snd .set-li-name input{ padding: 6px 8px; font-weight: 600; }
+  .set-li.snd.current{ border-color: color-mix(in srgb, var(--amber) 55%, transparent); }
+  .set-icon-btn.play{ color: var(--amber); }
+  .set-icon-btn.play svg{ fill: currentColor; stroke-width: 1.2; }
   /* phones */
   @media (max-width: 560px){
     .set-row{ flex-direction: column; align-items: stretch; gap: 8px; }
@@ -1734,6 +1738,7 @@ const DEV_DEFAULTS = {
   confetti: true,
   sound: true,
   volume: .9,
+  roar: 'builtin',      // 'builtin' | 'random' | the id of one of your sounds
   easterEgg: true,
   vibration: true,
   xpPopups: true
@@ -3795,8 +3800,93 @@ function openHistory(date){
 const SVGNS = 'http://www.w3.org/2000/svg';
 let battleRunning = false;
 
+// ----- Your own roar sounds (Settings -> Sound & feel). The files stay on this
+//       device in IndexedDB next to the backgrounds. Each one is decoded once and
+//       played through Web Audio, so it starts right on the tap and the volume
+//       slider works on phones too.
+const SND_META_KEY = 'training-log-sound-meta';
+const SND_MAX_SECONDS = 60;
+let SND_LIST = (() => { try{ return JSON.parse(localStorage.getItem(SND_META_KEY) || '[]') || []; } catch(e){ return []; } })();
+function saveSndMeta(){ try{ localStorage.setItem(SND_META_KEY, JSON.stringify(SND_LIST)); } catch(e){} }
+const roarBuffers = new Map();   // id -> promise of the decoded AudioBuffer
+const roarReady = new Map();     // id -> decoded AudioBuffer, for playing without waiting
+let roarNow = null;              // the clip that's playing: {ac, gain}
+
+function audioCtx(){ const AC = window.AudioContext || window.webkitAudioContext; return AC ? new AC() : null; }
+function closeCtx(ac){ try{ const p = ac && ac.close(); if(p && p.catch) p.catch(() => {}); } catch(e){} }
+function decodeAudioFile(blob){
+  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if(!OAC) return Promise.reject(new Error('no Web Audio'));
+  return blob.arrayBuffer().then(data => new Promise((resolve, reject) => {
+    const p = new OAC(1, 1, 44100).decodeAudioData(data, resolve, reject);
+    if(p && p.then) p.then(resolve, reject);
+  }));
+}
+function roarBuffer(id){
+  if(!roarBuffers.has(id)){
+    roarBuffers.set(id, bgGet(id)
+      .then(blob => blob ? decodeAudioFile(blob) : null)
+      .then(buf => { if(buf) roarReady.set(id, buf); return buf; })
+      .catch(() => null));
+  }
+  return roarBuffers.get(id);
+}
+function roarChoices(){
+  if(DEV.roar === 'random') return SND_LIST.map(x => x.id);
+  return SND_LIST.some(x => x.id === DEV.roar) ? [DEV.roar] : [];
+}
+function prepareRoars(){ roarChoices().forEach(roarBuffer); }
+function playRoarBuffer(ac, buf){
+  stopRoar();
+  if(!ac || !buf){ closeCtx(ac); return false; }
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const gain = ac.createGain();
+  gain.gain.value = Math.min(1, Math.max(0, Number(DEV.volume ?? .9)));
+  src.connect(gain).connect(ac.destination);
+  if(ac.state === 'suspended' && ac.resume) ac.resume().catch(() => {});
+  src.start();
+  const me = {ac, gain};
+  roarNow = me;
+  src.onended = () => { if(roarNow === me) roarNow = null; closeCtx(ac); };
+  return true;
+}
+// Fade out whatever clip is playing (the battle calls this when it's over).
+function stopRoar(fade){
+  const r = roarNow;
+  if(!r) return;
+  roarNow = null;
+  const f = fade || .04;
+  try{
+    const t = r.ac.currentTime;
+    r.gain.gain.cancelScheduledValues(t);
+    r.gain.gain.setValueAtTime(r.gain.gain.value, t);
+    r.gain.gain.linearRampToValueAtTime(0, t + f);
+  } catch(e){}
+  setTimeout(() => closeCtx(r.ac), (f + .15) * 1000);
+}
+
 function growl(){
   if(!DEV.sound || !(Number(DEV.volume) > 0)) return;
+  if(DEV.roar && DEV.roar !== 'builtin'){
+    const ready = roarChoices().filter(id => roarReady.has(id));
+    if(ready.length){ playRoarBuffer(audioCtx(), roarReady.get(ready[Math.floor(Math.random() * ready.length)])); return; }
+    prepareRoars();   // not decoded yet (or the file is gone): the built-in roar plays this time
+  }
+  synthRoar();
+}
+// Settings preview. The audio context is made inside the tap so phones allow it.
+async function previewRoar(choice){
+  if(!choice || choice === 'builtin'){ synthRoar(); return; }
+  const id = choice === 'random' ? (SND_LIST[Math.floor(Math.random() * SND_LIST.length)] || {}).id : choice;
+  const ac = audioCtx();
+  const buf = id ? await roarBuffer(id) : null;
+  if(!buf){ closeCtx(ac); flash('Couldn\'t play that sound. Try adding the file again.', 'warn'); return; }
+  playRoarBuffer(ac, buf);
+}
+setTimeout(prepareRoars, 1500);
+
+function synthRoar(){
   // A monster roar built from layers, all synthesized (only ever from a click):
   //  - a sub-bass rumble you feel more than hear
   //  - a distorted, throaty roar whose "vowel" sweeps open like a jaw
@@ -4132,6 +4222,7 @@ function startBattle(){
     else {
       svg.style.transition = 'opacity .5s ease';
       svg.style.opacity = '0';
+      stopRoar(1.2);
       setTimeout(() => { svg.remove(); battleRunning = false; }, 550);
       if(!mouthClosed) closeMouth(oni, scene);
     }
@@ -4328,7 +4419,7 @@ function iconBtn(svgPath, label, onClick, cls){
   return el('button', {type: 'button', class: 'set-icon-btn ' + (cls || ''), 'aria-label': label, title: label, onclick: onClick,
     html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + svgPath + '"/></svg>'});
 }
-const ICON_UP = 'M6 15l6-6 6 6', ICON_DOWN = 'M6 9l6 6 6-6', ICON_X = 'M6 6l12 12M18 6L6 18';
+const ICON_UP = 'M6 15l6-6 6 6', ICON_DOWN = 'M6 9l6 6 6-6', ICON_X = 'M6 6l12 12M18 6L6 18', ICON_PLAY = 'M8.5 5.8v12.4L18.5 12z';
 // Two-tap buttons for anything destructive (no browser pop-ups needed)
 function confirmBtn(text, confirmText, action, cls){
   let armed = false, t = null;
@@ -4383,7 +4474,7 @@ const SECTIONS = [
   ['badges', 'Badges', 'Badge targets and pop-ups', 'sync'],
   ['look', 'Look & themes', 'Theme, schedule, motion, colors, text size', 'dev'],
   ['backgrounds', 'Backgrounds', 'Add your own pictures and videos', 'dev'],
-  ['sound', 'Sound & feel', 'Roar, vibration and pop-ups', 'dev'],
+  ['sound', 'Sound & feel', 'Roar (or your own sound), vibration and pop-ups', 'dev'],
   ['data', 'Sync & data', 'Sync code, backups and resets', 'mixed'],
   ['about', 'About', 'Version and links', '']
 ];
@@ -4808,14 +4899,44 @@ const SECTION_BUILDERS = {
 
   // ---------------- Sound & feel (device) ----------------
   sound(body){
-    body.append(
-      row('Onigashima roar', 'The growl when you wake Onigashima in the Wano theme.', toggleIn(DEV.sound, v => { setD('sound', v); rebuildSection('sound'); }, 'Onigashima roar')),
-      DEV.sound ? row('Roar volume', '', rangeIn(Math.round((DEV.volume ?? .9) * 100), 0, 100, 5, (v, done) => { DEV.volume = v / 100; if(done) saveDev(); }, v => v + '%')) : null,
+    const opts = [['builtin', 'Built-in roar']]
+      .concat(SND_LIST.length > 1 ? [['random', 'A random one of mine']] : [])
+      .concat(SND_LIST.map(x => [x.id, x.name]));
+    const cur = opts.some(o => o[0] === DEV.roar) ? DEV.roar : (DEV.roar === 'random' && SND_LIST[0] ? SND_LIST[0].id : 'builtin');
+    const list = el('div', {class: 'set-list'});
+    if(!SND_LIST.length) list.append(el('div', {class: 'set-empty', text: 'No sounds of your own yet.'}));
+    SND_LIST.forEach(snd => {
+      list.append(el('div', {class: 'set-li snd' + (cur === snd.id ? ' current' : '')}, [
+        iconBtn(ICON_PLAY, 'Play ' + snd.name, () => previewRoar(snd.id), 'play'),
+        el('span', {class: 'set-li-name'}, [
+          textIn(snd.name, v => { snd.name = (v || 'My roar').slice(0, 30); saveSndMeta(); rebuildSection('sound'); }, {max: 30, wide: true, label: 'Sound name'}),
+          el('small', {text: fmtDuration(snd.duration) + ' · ' + fmtBytes(snd.size) + (cur === snd.id ? ' · in use' : '')})
+        ]),
+        confirmBtn('Remove', 'Tap again', () => removeRoarSound(snd.id))
+      ]));
+    });
+    const file = el('input', {type: 'file', multiple: true, class: 'hidden', accept: SND_ACCEPT});
+    file.addEventListener('change', () => { addRoarFiles([...file.files]); file.value = ''; });
+    body.append(...[
+      row('Onigashima roar', 'The sound when you wake Onigashima in the Wano theme.', toggleIn(DEV.sound, v => { setD('sound', v); rebuildSection('sound'); }, 'Onigashima roar')),
+      DEV.sound ? row('Roar sound', 'Pick the built-in roar or one of your own.', el('span', {class: 'set-pair'}, [
+        selectIn(opts, cur, v => { setD('roar', v); prepareRoars(); rebuildSection('sound'); }, 'Roar sound'),
+        smallBtn('Play', () => previewRoar(cur))
+      ]), {keywords: 'voice audio custom own'}) : null,
+      DEV.sound ? row('Roar volume', '', rangeIn(Math.round((DEV.volume ?? .9) * 100), 0, 100, 5, (v, done) => { DEV.volume = v / 100; if(roarNow) roarNow.gain.gain.value = DEV.volume; if(done) saveDev(); }, v => v + '%')) : null,
+      DEV.sound ? row('Your own roar sounds', 'Record yourself roaring, or use any clip up to a minute long. Like your backgrounds, sound files stay on this device.', el('div', {}, [
+        list,
+        el('div', {class: 'bg-add'}, [
+          el('button', {type: 'button', class: 'btn', text: '+ Add sound files', onclick: () => file.click()}),
+          file,
+          el('small', {text: 'MP3, WAV, M4A, AAC, OGG, Opus, FLAC, WebM, AIFF. In the battle your sound fades out once the dragon is gone.'})
+        ])
+      ]), {stack: true, keywords: 'voice audio mp3 wav m4a file own custom record upload'}) : null,
       row('Onigashima easter egg', 'Lets you click Onigashima (or "· wano") to start the battle.', toggleIn(DEV.easterEgg, v => setD('easterEgg', v), 'Onigashima easter egg')),
       row('Vibration', 'Little buzzes when you tick things off (phones only).', toggleIn(DEV.vibration, v => setD('vibration', v), 'Vibration')),
       row('+XP pop-ups', 'The small "+15 XP" messages in the corner.', toggleIn(DEV.xpPopups, v => setD('xpPopups', v), '+XP pop-ups'))
-    );
-    sectionReset(body, 'Reset sound & feel', () => { ['sound', 'volume', 'easterEgg', 'vibration', 'xpPopups'].forEach(k => { DEV[k] = cloneJSON(DEV_DEFAULTS[k]); }); saveDev(); applyTheme(); rebuildSection('sound'); });
+    ].filter(Boolean));
+    sectionReset(body, 'Reset sound & feel', () => { ['sound', 'volume', 'roar', 'easterEgg', 'vibration', 'xpPopups'].forEach(k => { DEV[k] = cloneJSON(DEV_DEFAULTS[k]); }); saveDev(); applyTheme(); rebuildSection('sound'); });
   },
 
   // ---------------- Sync & data ----------------
@@ -4852,7 +4973,7 @@ const SECTION_BUILDERS = {
         smallBtn('Copy', () => { (navigator.clipboard ? navigator.clipboard.writeText(syncCode) : Promise.reject()).then(() => flash('Sync code copied.')).catch(() => flash('Couldn\'t copy, select it by hand.', 'warn')); })
       ])),
       row('Switch device or code', 'Connect this device to a different code or create a new one.', smallBtn('Open device sync', () => document.getElementById('changeSyncBtn').click())),
-      row('Export a backup', 'Downloads your whole log and settings as a file. Your own background files aren\'t included.', smallBtn('Export', exportBackup)),
+      row('Export a backup', 'Downloads your whole log and settings as a file. Your own background and sound files aren\'t included.', smallBtn('Export', exportBackup)),
       row('Import a backup', 'Restore from a file you exported earlier.', el('span', {}, [smallBtn('Choose file', () => imp.click()), imp])),
       impBox,
       el('div', {class: 'set-danger'}, [
@@ -4985,6 +5106,53 @@ async function removeBackground(id){
   flash('Background removed.');
   rebuildSection('backgrounds');
   rebuildSection('look');
+}
+
+// ----- roar sounds -----
+const SND_ACCEPT = 'audio/*,.mp3,.wav,.wave,.m4a,.aac,.ogg,.oga,.opus,.flac,.webm,.weba,.caf,.aif,.aiff';
+const SND_EXT = ['mp3', 'wav', 'wave', 'm4a', 'aac', 'ogg', 'oga', 'opus', 'flac', 'webm', 'weba', 'caf', 'aif', 'aiff'];
+function fmtDuration(sec){
+  const v = Math.round((Number(sec) || 0) * 10) / 10;
+  return v < 60 ? v + ' s' : Math.floor(v / 60) + ':' + String(Math.round(v % 60)).padStart(2, '0') + ' min';
+}
+async function addRoarFiles(files){
+  if(!files.length) return;
+  let added = 0, firstId = null;
+  for(const f of files){
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    if(!(f.type || '').startsWith('audio/') && !SND_EXT.includes(ext)){ flash(f.name + ' isn\'t a sound file.', 'warn'); continue; }
+    if(f.size > 25 * 1048576){ flash(f.name + ' is too big. Sound files can be up to 25 MB.', 'warn'); continue; }
+    flash('Adding ' + f.name + '…');
+    let buf = null;
+    try{ buf = await decodeAudioFile(f); } catch(e){}
+    if(!buf){ flash('Couldn\'t open ' + f.name + (['mp3', 'wav', 'wave'].includes(ext) ? '. The file might be damaged.' : '. It may be damaged, or this browser can\'t play ' + ext.toUpperCase() + ' files (MP3 and WAV always work).'), 'warn'); continue; }
+    if(buf.duration > SND_MAX_SECONDS + .5){ flash(f.name + ' is ' + fmtDuration(buf.duration) + ' long. Roar sounds can be up to a minute.', 'warn'); continue; }
+    const id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    try{ await bgPut(id, f); }
+    catch(e){ flash('There isn\'t enough space on this device for ' + f.name + '.', 'warn'); continue; }
+    roarBuffers.set(id, Promise.resolve(buf));
+    roarReady.set(id, buf);
+    SND_LIST.push({id, name: (f.name.replace(/\.[^.]+$/, '') || 'My roar').slice(0, 30), type: f.type, size: f.size, duration: buf.duration, added: Date.now()});
+    added++; firstId = firstId || id;
+  }
+  saveSndMeta();
+  if(added){
+    if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    // switching from the built-in roar: use the new sound straight away
+    if(!DEV.roar || DEV.roar === 'builtin'){ DEV.roar = firstId; saveDev(); }
+    flash(added === 1 ? 'Sound added. Tap Play to hear it.' : added + ' sounds added.');
+  }
+  rebuildSection('sound');
+}
+async function removeRoarSound(id){
+  try{ await bgDel(id); } catch(e){}
+  roarBuffers.delete(id);
+  roarReady.delete(id);
+  SND_LIST = SND_LIST.filter(x => x.id !== id);
+  saveSndMeta();
+  if(DEV.roar === id || (DEV.roar === 'random' && !SND_LIST.length)){ DEV.roar = 'builtin'; saveDev(); }
+  flash('Sound removed.');
+  rebuildSection('sound');
 }
 
 // ----- applied on every render: synced look of the Today page -----
