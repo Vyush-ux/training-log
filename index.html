@@ -1168,6 +1168,17 @@
   .set-li.snd.current{ border-color: color-mix(in srgb, var(--amber) 55%, transparent); }
   .set-icon-btn.play{ color: var(--amber); }
   .set-icon-btn.play svg{ fill: currentColor; stroke-width: 1.2; }
+  .icon-edit{ display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-top: 12px; }
+  .icon-home{ display: flex; flex-direction: column; align-items: center; gap: 7px; width: 112px; }
+  .icon-home span{ font-size: 12px; max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+  .icon-prev{ width: 96px; height: 96px; border-radius: 22%; background: #000; box-shadow: 0 6px 18px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .08); touch-action: none; }
+  .icon-prev.draggable{ cursor: grab; }
+  .icon-prev.dragging{ cursor: grabbing; }
+  .icon-side{ display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
+  .icon-tab{ display: inline-flex; align-items: center; gap: 8px; max-width: 240px; padding: 7px 16px 7px 10px; font-size: 12.5px; border-radius: 10px 10px 0 0; background: rgba(255, 255, 255, .07); border: 1px solid var(--panel-line); border-bottom-color: transparent; }
+  .icon-tab img{ width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; }
+  .icon-tab span{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .icon-types{ font-size: 11.5px; color: var(--text-faint); }
   /* phones */
   @media (max-width: 560px){
     .set-row{ flex-direction: column; align-items: stretch; gap: 8px; }
@@ -1741,7 +1752,8 @@ const DEV_DEFAULTS = {
   roar: 'builtin',      // 'builtin' | 'random' | the id of one of your sounds
   easterEgg: true,
   vibration: true,
-  xpPopups: true
+  xpPopups: true,
+  appName: ''           // '' = Training Log
 };
 function cloneJSON(v){ return JSON.parse(JSON.stringify(v)); }
 function loadDev(){
@@ -1751,6 +1763,31 @@ function loadDev(){
 let DEV = loadDev();
 function saveDev(){ try{ localStorage.setItem(DEV_KEY, JSON.stringify(DEV)); } catch(e){} }
 function reduceMotion(){ return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+
+// ===== App icon & name (Settings -> App icon). The finished icons are small PNGs
+//       kept in localStorage so they're there the moment the page opens; the
+//       original picture is kept in IndexedDB so it can be re-cropped later. =====
+const ICON_KEY = 'training-log-icon';
+const DEFAULT_ICON = {
+  touch: document.querySelector('link[rel="apple-touch-icon"]').getAttribute('href'),
+  fav: document.querySelector('link[rel="icon"]').getAttribute('href')
+};
+let ICON = (() => { try{ const v = JSON.parse(localStorage.getItem(ICON_KEY) || 'null'); return v && v.touch && v.fav ? v : null; } catch(e){ return null; } })();
+function appName(){ return String(DEV.appName || '').trim() || 'Training Log'; }
+function applyIcon(){
+  // swap the <link> elements instead of editing them: some browsers only notice a new one
+  [['apple-touch-icon', ICON ? ICON.touch : DEFAULT_ICON.touch, '180x180'], ['icon', ICON ? ICON.fav : DEFAULT_ICON.fav, '64x64']].forEach(([rel, href, sizes]) => {
+    const old = document.querySelector('link[rel="' + rel + '"]');
+    if(old && old.getAttribute('href') === href) return;
+    const l = document.createElement('link');
+    l.rel = rel; l.setAttribute('sizes', sizes); l.href = href;
+    if(rel === 'icon') l.type = 'image/png';
+    if(old) old.replaceWith(l); else document.head.appendChild(l);
+  });
+  document.title = appName();
+  document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute('content', appName());
+}
+applyIcon();
 
 // ===== Custom backgrounds: files live in IndexedDB on this device =====
 const BG_DB = 'training-log-backgrounds', BG_STORE = 'files', BG_META_KEY = 'training-log-bg-meta';
@@ -1894,6 +1931,7 @@ function syncVideoPlayback(){
   if(play) vid.play().catch(() => {}); else vid.pause();
 }
 function applyDeviceLook(){
+  applyIcon();
   const b = document.body;
   b.classList.toggle('motion-calm', DEV.motion === 'calm');
   b.classList.toggle('motion-off', DEV.motion === 'off');
@@ -4456,6 +4494,7 @@ const SEC_ICONS = {
   badges: 'M12 14a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM8.5 13l-1.5 8 5-3 5 3-1.5-8',
   look: 'M12 3a9 9 0 1 0 0 18c1 0 1.5-.7 1.5-1.5s-.6-1.2-.6-2 .7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 12.5h.01M9.5 8h.01M14.5 8h.01',
   backgrounds: 'M4 5h16v14H4zM6.5 16.5l4-4.5 3 3 2-2 2.5 3.5M15.5 9.5h.01',
+  appicon: 'M7 3.5h10A3.5 3.5 0 0 1 20.5 7v10a3.5 3.5 0 0 1-3.5 3.5H7A3.5 3.5 0 0 1 3.5 17V7A3.5 3.5 0 0 1 7 3.5zM12 7.6l1.3 2.8 3 .4-2.2 2 .6 3L12 14.3l-2.7 1.5.6-3-2.2-2 3-.4z',
   sound: 'M5 9v6h4l5 4V5L9 9zM17 9.5a3.5 3.5 0 0 1 0 5M19.5 7a7 7 0 0 1 0 10',
   data: 'M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
   about: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01'
@@ -4474,6 +4513,7 @@ const SECTIONS = [
   ['badges', 'Badges', 'Badge targets and pop-ups', 'sync'],
   ['look', 'Look & themes', 'Theme, schedule, motion, colors, text size', 'dev'],
   ['backgrounds', 'Backgrounds', 'Add your own pictures and videos', 'dev'],
+  ['appicon', 'App icon', 'Your own picture and name for the app', 'dev'],
   ['sound', 'Sound & feel', 'Roar (or your own sound), vibration and pop-ups', 'dev'],
   ['data', 'Sync & data', 'Sync code, backups and resets', 'mixed'],
   ['about', 'About', 'Version and links', '']
@@ -4897,6 +4937,59 @@ const SECTION_BUILDERS = {
     );
   },
 
+  // ---------------- App icon (device) ----------------
+  appicon(body){
+    const o = Object.assign({fit: 'cover', zoom: 1, x: 0, y: 0, bg: '#0e2032'}, ICON && ICON.opts);
+    const prev = el('canvas', {class: 'icon-prev', width: 192, height: 192, role: 'img', 'aria-label': 'Icon preview'});
+    const showSaved = href => { const im = new Image(); im.onload = () => { const g = prev.getContext('2d'); g.clearRect(0, 0, 192, 192); g.drawImage(im, 0, 0, 192, 192); }; im.src = href; };
+    const file = el('input', {type: 'file', class: 'hidden', accept: ICON_ACCEPT});
+    file.addEventListener('change', () => { const f = file.files[0]; file.value = ''; if(f) setIconFile(f); });
+    const controls = el('div', {class: 'icon-ctl'});
+    body.append(
+      row('App icon', ICON ? 'Drag the picture to move it.' : 'The icon in your browser tab and on your home screen.', el('div', {class: 'icon-edit'}, [
+        el('div', {class: 'icon-home'}, [prev, el('span', {text: appName()})]),
+        el('div', {class: 'icon-side'}, [
+          el('div', {class: 'icon-tab', title: 'How it looks in a browser tab'}, [el('img', {alt: '', src: ICON ? ICON.fav : DEFAULT_ICON.fav}), el('span', {text: appName()})]),
+          el('div', {class: 'set-pair'}, [
+            el('button', {type: 'button', class: 'btn', text: ICON ? 'Choose another picture' : 'Choose a picture', onclick: () => file.click()}),
+            file,
+            ICON ? smallBtn('Use the default icon', resetIcon) : null
+          ]),
+          el('small', {class: 'icon-types', text: 'JPG, PNG, WebP, GIF, AVIF, SVG, BMP, ICO, HEIC (Safari)'})
+        ])
+      ]), {stack: true, keywords: 'logo favicon picture image photo home screen'}),
+      controls,
+      row('App name', 'Shown in the browser tab and under the icon on your home screen.', textIn(DEV.appName || '', v => { setD('appName', v); applyIcon(); rebuildSection('appicon'); }, {max: 30, placeholder: 'Training Log', label: 'App name'})),
+      note('Your browser tab changes straight away. Phones only take the icon and name when you add the app to the home screen, so to change one that\'s already there: remove it, then do "Add to Home Screen" again.')
+    );
+    if(!ICON){ showSaved(DEFAULT_ICON.touch); return; }
+    loadIconSource().then(srcImg => {
+      if(!srcImg){ showSaved(ICON.touch); controls.append(note('Choose the picture again if you want to change how it\'s cropped.')); return; }
+      const draw = () => drawIcon(prev, srcImg, o);
+      draw();
+      prev.classList.add('draggable');
+      let drag = null;
+      prev.addEventListener('pointerdown', e => { drag = {sx: e.clientX, sy: e.clientY, x: o.x, y: o.y}; try{ prev.setPointerCapture(e.pointerId); } catch(err){} prev.classList.add('dragging'); });
+      prev.addEventListener('pointermove', e => {
+        if(!drag) return;
+        const k = prev.width / (prev.getBoundingClientRect().width || prev.width);
+        const [mx, my] = iconSlack(srcImg, o, prev.width);
+        if(mx > .5) o.x = Math.max(-1, Math.min(1, drag.x + (e.clientX - drag.sx) * k / mx));
+        if(my > .5) o.y = Math.max(-1, Math.min(1, drag.y + (e.clientY - drag.sy) * k / my));
+        draw();
+      });
+      const end = () => { if(!drag) return; drag = null; prev.classList.remove('dragging'); commitIcon(o); };
+      prev.addEventListener('pointerup', end);
+      prev.addEventListener('pointercancel', end);
+      controls.append(
+        row('Crop', 'Fill crops the picture to a square, Fit shows all of it.', segIn([['cover', 'Fill'], ['contain', 'Fit']], o.fit, v => { o.fit = v; o.x = 0; o.y = 0; draw(); commitIcon(o); })),
+        row('Zoom', '', rangeIn(Math.round(o.zoom * 100), 50, 300, 5, (v, done) => { o.zoom = v / 100; draw(); if(done) commitIcon(o); }, v => v + '%')),
+        row('Background color', 'Shows behind see-through parts, and around the picture with Fit.', colorIn(o.bg, v => { o.bg = v; draw(); commitIcon(o); }, 'Icon background color')),
+        el('div', {class: 'set-foot'}, smallBtn('Center it again', () => { o.x = 0; o.y = 0; o.zoom = 1; commitIcon(o); rebuildSection('appicon'); }))
+      );
+    });
+  },
+
   // ---------------- Sound & feel (device) ----------------
   sound(body){
     const opts = [['builtin', 'Built-in roar']]
@@ -5106,6 +5199,107 @@ async function removeBackground(id){
   flash('Background removed.');
   rebuildSection('backgrounds');
   rebuildSection('look');
+}
+
+// ----- app icon -----
+const ICON_ACCEPT = 'image/*,.jpg,.jpeg,.jfif,.png,.apng,.gif,.webp,.avif,.bmp,.svg,.ico,.heic,.heif';
+let iconSrc = null;   // the original picture, shrunk to at most 2048px
+function loadImageBlob(blob){
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(blob);
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    i.src = url;
+  });
+}
+function srcSize(img){ return [img.naturalWidth || img.width || 512, img.naturalHeight || img.height || 512]; }
+// Halve big photos step by step first: one huge downscale looks jagged in some browsers.
+function shrinkSource(img){
+  if(!(img.naturalWidth > 0)){   // an SVG without a size
+    const c = document.createElement('canvas'); c.width = c.height = 1024;
+    c.getContext('2d').drawImage(img, 0, 0, 1024, 1024);
+    return c;
+  }
+  let [w, h] = srcSize(img), cur = img;
+  while(Math.max(w, h) > 2048){
+    w = Math.round(w / 2); h = Math.round(h / 2);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(cur, 0, 0, w, h);
+    cur = c;
+  }
+  return cur;
+}
+function iconLayout(img, o, size){
+  const [iw, ih] = srcSize(img);
+  const base = o.fit === 'contain' ? Math.min(size / iw, size / ih) : Math.max(size / iw, size / ih);
+  const sc = base * (o.zoom || 1);
+  return {dw: iw * sc, dh: ih * sc};
+}
+function iconSlack(img, o, size){ const {dw, dh} = iconLayout(img, o, size); return [Math.abs(dw - size) / 2, Math.abs(dh - size) / 2]; }
+function drawIcon(canvas, img, o){
+  const size = canvas.width, g = canvas.getContext('2d');
+  const {dw, dh} = iconLayout(img, o, size);
+  const [mx, my] = iconSlack(img, o, size);
+  g.clearRect(0, 0, size, size);
+  g.fillStyle = o.bg || '#0e2032';
+  g.fillRect(0, 0, size, size);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  g.drawImage(img, (size - dw) / 2 + (o.x || 0) * mx, (size - dh) / 2 + (o.y || 0) * my, dw, dh);
+}
+function downTo(src, size){
+  let cur = src;
+  while(cur.width / 2 >= size){
+    const c = document.createElement('canvas'); c.width = c.height = Math.round(cur.width / 2);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(cur, 0, 0, c.width, c.height);
+    cur = c;
+  }
+  if(cur.width === size) return cur;
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(cur, 0, 0, size, size);
+  return c;
+}
+async function loadIconSource(){
+  if(iconSrc) return iconSrc;
+  try{
+    const blob = await bgGet('appicon-src');
+    const img = blob ? await loadImageBlob(blob) : null;
+    if(img) iconSrc = shrinkSource(img);
+  } catch(e){}
+  return iconSrc;
+}
+function commitIcon(o){
+  if(!iconSrc) return false;
+  const big = document.createElement('canvas'); big.width = big.height = 720;
+  drawIcon(big, iconSrc, o);
+  const next = {touch: downTo(big, 180).toDataURL('image/png'), fav: downTo(big, 64).toDataURL('image/png'), opts: {...o}};
+  try{ localStorage.setItem(ICON_KEY, JSON.stringify(next)); }
+  catch(e){ flash('There isn\'t enough space on this device for that icon.', 'warn'); return false; }
+  ICON = next;
+  applyIcon();
+  document.querySelectorAll('.icon-tab img').forEach(i => { i.src = ICON.fav; });
+  return true;
+}
+async function setIconFile(f){
+  if(fileKind(f) !== 'image'){ flash(f.name + ' isn\'t a picture.', 'warn'); return; }
+  const img = await loadImageBlob(f);
+  if(!img){
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    flash('Couldn\'t open ' + f.name + (['jpg', 'jpeg', 'png'].includes(ext) ? '. The file might be damaged.' : '. It may be damaged, or this browser can\'t show that type (JPG and PNG always work).'), 'warn');
+    return;
+  }
+  iconSrc = shrinkSource(img);
+  try{ await bgPut('appicon-src', f); } catch(e){ /* only needed for re-cropping later */ }
+  if(commitIcon({fit: 'cover', zoom: 1, x: 0, y: 0, bg: (ICON && ICON.opts && ICON.opts.bg) || '#0e2032'})) flash('New icon set. Drag it in the preview to move it.');
+  rebuildSection('appicon');
+}
+async function resetIcon(){
+  ICON = null; iconSrc = null;
+  try{ localStorage.removeItem(ICON_KEY); } catch(e){}
+  try{ await bgDel('appicon-src'); } catch(e){}
+  applyIcon();
+  flash('Back to the default icon.');
+  rebuildSection('appicon');
 }
 
 // ----- roar sounds -----

@@ -42,10 +42,11 @@ The gear in the top right opens Settings, and you can change pretty much everyth
 - How much XP everything gives, how much a level takes, what counts as a successful or perfect day and what each badge needs
 - The theme schedule, how much the background moves, darker background, see-through cards, your own accent color, text size, confetti, sound, vibration and the +XP pop-ups
 - Your own backgrounds. Add pictures or videos (JPG, PNG, GIF, WebP, AVIF, MP4, WebM, MOV and more) and use them just like the built-in scenes, even in the schedule
+- Your own app icon and name. Pick any picture, drag and zoom it until it looks right, and it becomes the icon in your browser tab and on your home screen. (Phones only grab the icon when you add the app, so if it's already on your home screen, remove it and add it again)
 - Your own roar. Record yourself (or grab any clip up to a minute long), add it as MP3, WAV, M4A or whatever, and that's what plays when Onigashima wakes up. If you add a few, it can pick a random one each time
 - Backups you can export and import again, plus resets for just today, just XP and badges, or everything
 
-Most settings are saved in your log, so they follow you to every device. The look, sound and background stuff only changes the device you're on, and your background and sound files stay on that device because they'd be way too big for the sync.
+Most settings are saved in your log, so they follow you to every device. The look, sound and background stuff only changes the device you're on, and your background, sound and icon files stay on that device because they'd be way too big for the sync.
 
 It works on my phone and my laptop and syncs between them with a sync code.
 
