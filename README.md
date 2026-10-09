@@ -37,8 +37,10 @@ It works on my phone and my laptop and syncs between them with a sync code.
 | Theme | When it shows up | What's in it |
 |---|---|---|
 | ☀︎ Alabasta | 6:00 to 17:00 | The desert, the palace far away on the horizon, and the crew doing the X salute on the ship |
-| ◒ Wano | 17:00 to 6:00 | Sunset over the Flower Capital, falling sakura, lanterns, and Onigashima glowing red out at sea |
-| ☾ Water 7 | Pick it with the theme button | The fountain city at night with the sea train going past |
+| ◒ Wano | 17:00 to 18:00 | Sunset over the Flower Capital, falling sakura, lanterns, and Onigashima glowing red out at sea |
+| ☾ Water 7 | 18:00 to 6:00 | The fountain city at night with the sea train going past |
+
+You can also just pick one with the theme button in the top right if you don't want it to switch by itself.
 
 Little secret: in Wano, click on Onigashima (on your phone tap "· wano" at the top). Turn your sound on for this one.
 

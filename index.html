@@ -1516,7 +1516,7 @@ const THEME_ICONS = {
   evening: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 16.5a6.5 6.5 0 0 1 13 0z" class="ic-fill"/><g class="ic-line"><path d="M2.5 16.5h19M5 20h14M12 4.5v2.4M5.6 8.4l1.6 1.6M18.4 8.4l-1.6 1.6"/></g></svg>',
   night:   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1z" class="ic-fill"/><path d="M17.2 3.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" class="ic-fill"/></svg>'
 };
-// Day = Alabasta; Wano from evening through the night; Water 7 when picked with the button.
+// Day = Alabasta (6-17), evening = Wano (17-18), night = Water 7 (18-6).
 const THEMES = {
   day:     {place: 'alabasta', label: 'day',     bar: '#3a2414'},
   evening: {place: 'wano',     label: 'evening', bar: '#24132e'},
@@ -1525,7 +1525,8 @@ const THEMES = {
 function computeAutoTheme(){
   const h = new Date().getHours();
   if(h >= 6 && h < 17) return 'day';
-  return 'evening';
+  if(h >= 17 && h < 18) return 'evening';
+  return 'night';
 }
 
 function applyTheme(){
