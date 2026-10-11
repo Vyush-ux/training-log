@@ -42,11 +42,11 @@ The gear in the top right opens Settings, and you can change pretty much everyth
 - How much XP everything gives, how much a level takes, what counts as a successful or perfect day and what each badge needs
 - The theme schedule, how much the background moves, darker background, see-through cards, your own accent color, text size, confetti, sound, vibration and the +XP pop-ups
 - Your own backgrounds. Add pictures or videos (JPG, PNG, GIF, WebP, AVIF, MP4, WebM, MOV and more) and use them just like the built-in scenes, even in the schedule
-- Your own app icon and name. Pick any picture, drag and zoom it until it looks right, and it becomes the icon in your browser tab and on your home screen. It's saved in your log, so all your devices get it. Phones and tablets only grab the icon at the moment you add the app though, so if it's already on your home screen you have to add it again from the browser (Settings shows the steps)
+- Your own app icon and name. Pick any picture, drag and zoom it until it looks right, and it becomes the icon in your browser tab and on your home screen. It's saved in your log, so all your devices get it. Phones and tablets only grab the icon at the moment you add the app though, so set it in the browser first and then add the app to your home screen (the steps are further down and in Settings)
 - Your own roar. Record yourself (or grab any clip up to a minute long), add it as MP3, WAV, M4A or whatever, and that's what plays when Onigashima wakes up. If you add a few, it can pick a random one each time
 - Backups you can export and import again, plus resets for just today, just XP and badges, or everything
 
-Most settings are saved in your log, so they follow you to every device. The look, sound and background stuff only changes the device you're on, and your background and sound files stay on that device because they'd be way too big for the sync.
+Most settings are saved in your log, so they follow you to every device. The look, sound and background stuff only changes the device you're on, and your background and sound files stay on that device because they'd be way too big for the sync. On an iPhone or iPad the app on your home screen counts as its own device here, even next to Safari on the same iPad. More on that under "Putting it on your home screen".
 
 It works on my phone and my laptop and syncs between them with a sync code.
 
@@ -87,7 +87,24 @@ Little secret: in Wano, click on Onigashima (on your phone tap "· wano" at the 
 1. Open the link up top
 2. The first time, press "Create a new sync code" and save that code somewhere. On your other devices you just type in the same code
 3. Tick stuff off during the day. It saves by itself
-4. On your phone you can do "Add to Home Screen" so it opens like a normal app
+4. On your phone or tablet you can put it on your home screen so it opens like a normal app. Do it in the order below, it matters
+
+## Putting it on your home screen
+
+On an iPhone or iPad the order matters, for two reasons. The home screen only looks at the icon and name once, at the moment you add the app. And the app on the home screen is like its own little browser: it doesn't share anything with Safari.
+
+1. Open the link in **Safari** (the normal browser, not an old home screen icon) and connect with your sync code
+2. If you want your own icon or name, set them now in Settings → App icon. They have to be there before the next step
+3. Tap the Share button, then "Add to Home Screen"
+4. Open the app from the new icon and type in your sync code. It doesn't know it yet, even though Safari does
+5. Only now add your own backgrounds and roar sounds and change the look and sound settings, inside the home screen app. Anything like that you set up in Safari doesn't carry over
+
+So: icon and name first in the browser, then add to home screen, then sync code, then everything else.
+
+A few more things:
+- If you change your icon or name later, the one on your home screen stays the old one. Delete it and do steps 1 to 4 again
+- Your log (and everything marked "synced" in Settings) always comes back with the sync code. Only the stuff from step 5 has to be redone
+- On Android it's simpler. The home screen icon just opens the page in Chrome, so whatever you set up in Chrome is already there. You still need the icon set before you add it
 
 ## How the points work
 

@@ -1185,6 +1185,8 @@
   .icon-help ol{ margin: 8px 0 8px 20px; display: flex; flex-direction: column; gap: 5px; color: var(--text); }
   .icon-help-foot{ font-size: 11.5px; color: var(--text-faint); }
   .icon-help .btn{ margin-top: 10px; }
+  .icon-help p{ margin: 0; }
+  .set-body > .icon-help:first-child{ margin-bottom: 4px; }
   /* phones */
   @media (max-width: 560px){
     .set-row{ flex-direction: column; align-items: stretch; gap: 8px; }
@@ -4548,7 +4550,7 @@ function renderSettings(){
       el('div', {class: 'set-flash', id: 'setFlash', role: 'status', 'aria-live': 'polite'})
     ]),
     search,
-    el('p', {class: 'set-intro', html: 'Everything saves by itself. <span class="chip sync">synced</span> settings follow you to every device, <span class="chip dev">this device</span> ones only change this browser.'})
+    el('p', {class: 'set-intro', html: 'Everything saves by itself. <span class="chip sync">synced</span> settings follow you to every device, <span class="chip dev">this device</span> ones only change this browser or home screen app.'})
   );
   SECTIONS.forEach(([key, title, sub, scope]) => {
     const d = el('details', {class: 'set-sec card'});
@@ -4876,6 +4878,7 @@ const SECTION_BUILDERS = {
     sched.append(el('div', {class: 'set-li add'}, smallBtn('Add a time', () => { slots.push({start: '12:00', theme: 'day'}); setD('schedule', slots); rebuildSection('look'); })));
     const alphaDefault = DEV.cardAlpha === null || DEV.cardAlpha === undefined || DEV.cardAlpha === '';
     body.append(
+      deviceStorageHelp('look and theme settings', 'change'),
       row('Theme', 'Auto follows the schedule below. You can also tap the theme button at the top.', selectIn([['auto', 'Auto (schedule)']].concat(themeOpts), themeMode, v => setThemeMode(v), 'Theme')),
       row('Auto schedule', 'Each scene starts at its time and runs until the next one.', sched, {stack: true, keywords: 'time alabasta wano water 7'}),
       row('Background motion', 'Calm hides petals, embers, ships and other moving bits. Off freezes everything.', segIn([['full', 'Full'], ['calm', 'Calm'], ['off', 'Off']], DEV.motion, v => setD('motion', v))),
@@ -4938,8 +4941,9 @@ const SECTION_BUILDERS = {
     const usage = el('small', {class: 'bg-usage'});
     if(navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { usage.textContent = 'Storage used on this device: ' + fmtBytes(e.usage || 0) + (e.quota ? ' of about ' + fmtBytes(e.quota) : ''); }).catch(() => {});
     body.append(
+      deviceStorageHelp('backgrounds', 'add'),
       row('Built-in scenes', 'These can\'t be removed.', builtin, {stack: true, keywords: 'alabasta wano water 7'}),
-      row('Your backgrounds', 'Pictures and videos stay on this device (they are too big for the cloud sync). Pick them as a theme or use them in the auto schedule.', mine, {stack: true, keywords: 'picture video photo image upload'}),
+      row('Your backgrounds', 'Pictures and videos are too big for the cloud sync, so they stay where you add them. Pick them as a theme or use them in the auto schedule.', mine, {stack: true, keywords: 'picture video photo image upload'}),
       el('div', {class: 'bg-add'}, [
         el('button', {type: 'button', class: 'btn', text: '+ Add pictures or videos', onclick: () => file.click()}),
         file,
@@ -5024,13 +5028,14 @@ const SECTION_BUILDERS = {
     const file = el('input', {type: 'file', multiple: true, class: 'hidden', accept: SND_ACCEPT});
     file.addEventListener('change', () => { addRoarFiles([...file.files]); file.value = ''; });
     body.append(...[
+      deviceStorageHelp('roar sounds and settings', 'set up'),
       row('Onigashima roar', 'The sound when you wake Onigashima in the Wano theme.', toggleIn(DEV.sound, v => { setD('sound', v); rebuildSection('sound'); }, 'Onigashima roar')),
       DEV.sound ? row('Roar sound', 'Pick the built-in roar or one of your own.', el('span', {class: 'set-pair'}, [
         selectIn(opts, cur, v => { setD('roar', v); prepareRoars(); rebuildSection('sound'); }, 'Roar sound'),
         smallBtn('Play', () => previewRoar(cur))
       ]), {keywords: 'voice audio custom own'}) : null,
       DEV.sound ? row('Roar volume', '', rangeIn(Math.round((DEV.volume ?? .9) * 100), 0, 100, 5, (v, done) => { DEV.volume = v / 100; if(roarNow) roarNow.gain.gain.value = DEV.volume; if(done) saveDev(); }, v => v + '%')) : null,
-      DEV.sound ? row('Your own roar sounds', 'Record yourself roaring, or use any clip up to a minute long. Like your backgrounds, sound files stay on this device.', el('div', {}, [
+      DEV.sound ? row('Your own roar sounds', 'Record yourself roaring, or use any clip up to a minute long. Like your backgrounds, sound files stay where you add them.', el('div', {}, [
         list,
         el('div', {class: 'bg-add'}, [
           el('button', {type: 'button', class: 'btn', text: '+ Add sound files', onclick: () => file.click()}),
@@ -5376,36 +5381,67 @@ async function resetIcon(){
 // A home screen icon is a snapshot: phones and tablets read the icon and name once,
 // when the app is added, and the added app keeps its own storage apart from the browser.
 function isStandalone(){ return navigator.standalone === true || !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
+function isIOS(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+const HOME_ADD_STEP = () => isIOS() ? 'Tap the Share button (the square with the arrow), then "Add to Home Screen".' : 'On an iPhone or iPad: Share button, then "Add to Home Screen". On Android: browser menu, then "Add to Home screen".';
 function homeScreenHelp(){
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const browser = ios ? 'Safari' : 'your browser';
-  const addStep = ios ? 'Tap the Share button (the square with the arrow), then "Add to Home Screen".' : 'On an iPad or iPhone: Share button, then "Add to Home Screen". On Android: browser menu, then "Add to Home screen".';
+  const browser = isIOS() ? 'Safari' : 'the browser';
   const url = location.origin + location.pathname;
   const copy = smallBtn('Copy the app link', () => { (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => flash('Link copied. Paste it into ' + browser + '.')).catch(() => flash(url, 'warn')); });
   const box = el('div', {class: 'icon-help' + (isStandalone() ? ' warn' : '')});
   if(isStandalone()){
     box.append(
       el('b', {text: 'This home screen icon can\'t change by itself'}),
-      el('p', {text: 'You opened the app from your home screen. Phones and tablets only read the icon and name at the moment you add the app, so the one you tapped keeps its old look. To get the new one:'}),
+      el('p', {text: 'You opened the app from your home screen. The home screen read the icon and name once, when you added it, and never looks again. To get a new one, do it in this order:'}),
       el('ol', {}, [
-        el('li', {text: 'Look up your sync code under Sync & data below. You\'ll need it twice.'}),
-        el('li', {text: 'Open the app link in ' + browser + ' (not from the home screen) and enter your sync code. Your icon and name are saved in your log, so they show up there by themselves.'}),
-        el('li', {text: addStep}),
-        el('li', {text: 'Open the new icon, enter your sync code again, then delete the old icon.'})
+        el('li', {text: 'Look up your sync code under Sync & data below.'}),
+        el('li', {text: 'Open the app link in ' + browser + ' (not from the home screen) and connect with your sync code. Choose your picture and name there. If you already set them, they show up by themselves, because they are saved in your log.'}),
+        el('li', {text: HOME_ADD_STEP()}),
+        el('li', {text: 'Open the app from the new icon and enter your sync code.'}),
+        el('li', {text: 'Add your backgrounds, roar sounds and "this device" settings again inside the new one, then delete this old icon.'})
       ]),
-      el('p', {class: 'icon-help-foot', text: 'The new icon is a fresh copy of the app on this device. Your log and synced settings come back with the code, but your own backgrounds, roar sounds and the "this device" settings need to be set up again in it.'}),
       copy
     );
   } else {
     box.append(
-      el('b', {text: 'Getting it onto your home screen'}),
-      el('p', {text: 'The browser tab changes straight away. A home screen icon is different: phones and tablets only read the icon and name at the moment you add the app, and never update them afterwards.'}),
+      el('b', {text: 'Putting it on your home screen: the order matters'}),
+      el('p', {text: 'The browser tab changes straight away. A home screen icon is different: the phone or tablet reads the icon and name once, at the moment you add the app, and never updates them afterwards.'}),
       el('ol', {}, [
-        el('li', {text: 'Open this page in ' + browser + ' on that device and check that your icon and name show up here.'}),
-        el('li', {text: addStep}),
-        el('li', {text: 'If an older icon is already on the home screen, open the new one, enter your sync code, then delete the old one.'})
+        el('li', {text: isIOS()
+          ? 'Here in Safari, choose your picture and name above first.'
+          : 'On that phone or tablet, open the app in the browser (Safari on an iPhone or iPad) and connect with your sync code. Your picture and name are saved in your log, so they show up there by themselves. You can also choose them there.'}),
+        el('li', {text: HOME_ADD_STEP()}),
+        el('li', {text: 'Open the app from the new icon and enter your sync code there. On an iPhone or iPad the home screen app doesn\'t know it yet.'}),
+        el('li', {text: 'Only now add your backgrounds, roar sounds and "this device" settings, inside the home screen app. What you set up in Safari doesn\'t carry over to it.'})
       ]),
-      el('p', {class: 'icon-help-foot', text: 'An app on the home screen keeps its own storage, apart from the browser. Your log and synced settings come back with your sync code, but your own backgrounds, roar sounds and the "this device" settings have to be set up again in the new one.'})
+      el('p', {class: 'icon-help-foot', text: 'Already have an older icon on the home screen? Delete it after step 3. Changing the icon later means doing these steps again. On Android the home screen icon simply opens the page in Chrome, so steps 3 and 4 aren\'t needed there.'})
+    );
+  }
+  return box;
+}
+// "This device" really means this browser OR this home screen app: on an iPhone or
+// iPad the two keep separate storage, so files added in Safari don't reach the app.
+function deviceStorageHelp(things, verb){
+  const box = el('div', {class: 'icon-help' + (isIOS() && !isStandalone() ? ' warn' : '')});
+  if(isStandalone()){
+    box.append(
+      el('b', {text: 'Saved in this home screen app'}),
+      el('p', {text: 'The ' + things + ' you ' + verb + ' here stay in this home screen app. Safari on this device and your other devices don\'t get them.'})
+    );
+  } else if(isIOS()){
+    box.append(
+      el('b', {text: 'Using the app from your home screen? Do this in there, not here'}),
+      el('p', {text: 'On an iPhone or iPad the home screen app keeps its own storage, apart from Safari. The ' + things + ' you ' + verb + ' here in Safari won\'t show up in it. The order that works:'}),
+      el('ol', {}, [
+        el('li', {text: 'Here in Safari: choose your app icon and name (Settings, App icon).'}),
+        el('li', {text: 'Share button, then "Add to Home Screen".'}),
+        el('li', {text: 'Open the app from the home screen and enter your sync code.'}),
+        el('li', {text: 'In there, ' + verb + ' your ' + things + '.'})
+      ])
+    );
+  } else {
+    box.append(
+      el('b', {text: 'Saved in this browser'}),
+      el('p', {text: 'The ' + things + ' you ' + verb + ' here stay in this browser on this device. On an iPhone or iPad, ' + verb + ' them inside the home screen app rather than in Safari (add the app to the home screen and enter your sync code first). The two don\'t share them.'})
     );
   }
   return box;
