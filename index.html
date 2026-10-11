@@ -1179,6 +1179,12 @@
   .icon-tab img{ width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; }
   .icon-tab span{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .icon-types{ font-size: 11.5px; color: var(--text-faint); }
+  .icon-help{ margin-top: 12px; padding: 12px 14px; border-radius: 12px; font-size: 12.5px; line-height: 1.55; color: var(--text-dim); background: color-mix(in srgb, var(--moss) 8%, transparent); border: 1px solid color-mix(in srgb, var(--moss) 30%, transparent); }
+  .icon-help.warn{ background: color-mix(in srgb, var(--amber) 10%, transparent); border-color: color-mix(in srgb, var(--amber) 45%, transparent); }
+  .icon-help b{ display: block; font-size: 13.5px; color: var(--text); margin-bottom: 4px; }
+  .icon-help ol{ margin: 8px 0 8px 20px; display: flex; flex-direction: column; gap: 5px; color: var(--text); }
+  .icon-help-foot{ font-size: 11.5px; color: var(--text-faint); }
+  .icon-help .btn{ margin-top: 10px; }
   /* phones */
   @media (max-width: 560px){
     .set-row{ flex-direction: column; align-items: stretch; gap: 8px; }
@@ -1764,19 +1770,22 @@ let DEV = loadDev();
 function saveDev(){ try{ localStorage.setItem(DEV_KEY, JSON.stringify(DEV)); } catch(e){} }
 function reduceMotion(){ return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
 
-// ===== App icon & name (Settings -> App icon). The finished icons are small PNGs
-//       kept in localStorage so they're there the moment the page opens; the
-//       original picture is kept in IndexedDB so it can be re-cropped later. =====
+// ===== App icon & name (Settings -> App icon). Both are saved in the synced log
+//       (the icon as a small 180px picture), so every device and browser that
+//       opens the log gets them. The finished PNGs are also cached here in
+//       localStorage so they're in place the moment the page opens. =====
 const ICON_KEY = 'training-log-icon';
 const DEFAULT_ICON = {
   touch: document.querySelector('link[rel="apple-touch-icon"]').getAttribute('href'),
   fav: document.querySelector('link[rel="icon"]').getAttribute('href')
 };
-let ICON = (() => { try{ const v = JSON.parse(localStorage.getItem(ICON_KEY) || 'null'); return v && v.touch && v.fav ? v : null; } catch(e){ return null; } })();
-function appName(){ return String(DEV.appName || '').trim() || 'Training Log'; }
+let ICON = (() => { try{ const v = JSON.parse(localStorage.getItem(ICON_KEY) || 'null'); return v && typeof v === 'object' ? v : {}; } catch(e){ return {}; } })();
+function saveIconCache(){ try{ localStorage.setItem(ICON_KEY, JSON.stringify(ICON)); } catch(e){} }
+function hasIcon(){ return !!(ICON.touch && ICON.fav); }
+function appName(){ return String(ICON.name || DEV.appName || '').trim() || 'Training Log'; }
 function applyIcon(){
   // swap the <link> elements instead of editing them: some browsers only notice a new one
-  [['apple-touch-icon', ICON ? ICON.touch : DEFAULT_ICON.touch, '180x180'], ['icon', ICON ? ICON.fav : DEFAULT_ICON.fav, '64x64']].forEach(([rel, href, sizes]) => {
+  [['apple-touch-icon', hasIcon() ? ICON.touch : DEFAULT_ICON.touch, '180x180'], ['icon', hasIcon() ? ICON.fav : DEFAULT_ICON.fav, '64x64']].forEach(([rel, href, sizes]) => {
     const old = document.querySelector('link[rel="' + rel + '"]');
     if(old && old.getAttribute('href') === href) return;
     const l = document.createElement('link');
@@ -1985,7 +1994,8 @@ const SETTINGS_DEFAULTS = {
     core: ['protein', 'creatine', 'b12', 'vitc', 'magnesium'],
     perfect: ['workout', 'nutrients', 'school', 'sleep', 'water', 'checkin']
   },
-  badges: {enabled: true, popups: true, targets: {}}
+  badges: {enabled: true, popups: true, targets: {}},
+  app: {name: '', icon: '', v: 0, opts: null}     // icon = 180px JPEG data URL, v = when it was set
 };
 const NUTRIENTS = {protein: 'Protein', creatine: 'Creatine', b12: 'B12', vitc: 'Vitamin C', magnesium: 'Magnesium'};
 let SET = cloneJSON(SETTINGS_DEFAULTS);
@@ -2029,6 +2039,7 @@ function refreshSettings(){
   SET.rules.need = numOr(SET.rules.need, 2, 1, Math.max(1, SET.rules.success.length));
   if(!Array.isArray(SET.layout.order)) SET.layout.order = SETTINGS_DEFAULTS.layout.order.slice();
   SETTINGS_DEFAULTS.layout.order.forEach(k => { if(!SET.layout.order.includes(k)) SET.layout.order.push(k); });
+  syncAppIcon();
 }
 
 function getNutrientDefinitions(){
@@ -2203,6 +2214,7 @@ function getDayLog(dateStr){
 function migrateState(){
   if(state.settings !== undefined && !isPlainObject(state.settings)) delete state.settings;
   refreshSettings();
+  migrateDeviceIcon();
   if(!state.dailyLogs) state.dailyLogs = {};
   if(!state.goalHistory) state.goalHistory = {};
   if(!Array.isArray(state.customNutrients)) state.customNutrients = [];
@@ -4513,7 +4525,7 @@ const SECTIONS = [
   ['badges', 'Badges', 'Badge targets and pop-ups', 'sync'],
   ['look', 'Look & themes', 'Theme, schedule, motion, colors, text size', 'dev'],
   ['backgrounds', 'Backgrounds', 'Add your own pictures and videos', 'dev'],
-  ['appicon', 'App icon', 'Your own picture and name for the app', 'dev'],
+  ['appicon', 'App icon', 'Your own picture and name for the app', 'sync'],
   ['sound', 'Sound & feel', 'Roar (or your own sound), vibration and pop-ups', 'dev'],
   ['data', 'Sync & data', 'Sync code, backups and resets', 'mixed'],
   ['about', 'About', 'Version and links', '']
@@ -4939,32 +4951,33 @@ const SECTION_BUILDERS = {
 
   // ---------------- App icon (device) ----------------
   appicon(body){
-    const o = Object.assign({fit: 'cover', zoom: 1, x: 0, y: 0, bg: '#0e2032'}, ICON && ICON.opts);
+    const custom = hasIcon();
+    const o = Object.assign({fit: 'cover', zoom: 1, x: 0, y: 0, bg: '#0e2032'}, SET.app.opts);
     const prev = el('canvas', {class: 'icon-prev', width: 192, height: 192, role: 'img', 'aria-label': 'Icon preview'});
     const showSaved = href => { const im = new Image(); im.onload = () => { const g = prev.getContext('2d'); g.clearRect(0, 0, 192, 192); g.drawImage(im, 0, 0, 192, 192); }; im.src = href; };
     const file = el('input', {type: 'file', class: 'hidden', accept: ICON_ACCEPT});
     file.addEventListener('change', () => { const f = file.files[0]; file.value = ''; if(f) setIconFile(f); });
     const controls = el('div', {class: 'icon-ctl'});
     body.append(
-      row('App icon', ICON ? 'Drag the picture to move it.' : 'The icon in your browser tab and on your home screen.', el('div', {class: 'icon-edit'}, [
+      row('App icon', custom ? 'Drag the picture to move it. It\'s saved in your log, so all your devices get it.' : 'The icon in your browser tab and on your home screen.', el('div', {class: 'icon-edit'}, [
         el('div', {class: 'icon-home'}, [prev, el('span', {text: appName()})]),
         el('div', {class: 'icon-side'}, [
-          el('div', {class: 'icon-tab', title: 'How it looks in a browser tab'}, [el('img', {alt: '', src: ICON ? ICON.fav : DEFAULT_ICON.fav}), el('span', {text: appName()})]),
+          el('div', {class: 'icon-tab', title: 'How it looks in a browser tab'}, [el('img', {alt: '', src: custom ? ICON.fav : DEFAULT_ICON.fav}), el('span', {text: appName()})]),
           el('div', {class: 'set-pair'}, [
-            el('button', {type: 'button', class: 'btn', text: ICON ? 'Choose another picture' : 'Choose a picture', onclick: () => file.click()}),
+            el('button', {type: 'button', class: 'btn', text: custom ? 'Choose another picture' : 'Choose a picture', onclick: () => file.click()}),
             file,
-            ICON ? smallBtn('Use the default icon', resetIcon) : null
+            custom ? smallBtn('Use the default icon', resetIcon) : null
           ]),
           el('small', {class: 'icon-types', text: 'JPG, PNG, WebP, GIF, AVIF, SVG, BMP, ICO, HEIC (Safari)'})
         ])
       ]), {stack: true, keywords: 'logo favicon picture image photo home screen'}),
       controls,
-      row('App name', 'Shown in the browser tab and under the icon on your home screen.', textIn(DEV.appName || '', v => { setD('appName', v); applyIcon(); rebuildSection('appicon'); }, {max: 30, placeholder: 'Training Log', label: 'App name'})),
-      note('Your browser tab changes straight away. Phones only take the icon and name when you add the app to the home screen, so to change one that\'s already there: remove it, then do "Add to Home Screen" again.')
+      row('App name', 'Shown in the browser tab and under the icon on your home screen.', textIn(SET.app.name || '', v => { setS('app.name', v.slice(0, 30)); rebuildSection('appicon'); }, {max: 30, placeholder: 'Training Log', label: 'App name'})),
+      homeScreenHelp()
     );
-    if(!ICON){ showSaved(DEFAULT_ICON.touch); return; }
+    if(!custom){ showSaved(DEFAULT_ICON.touch); return; }
     loadIconSource().then(srcImg => {
-      if(!srcImg){ showSaved(ICON.touch); controls.append(note('Choose the picture again if you want to change how it\'s cropped.')); return; }
+      if(!srcImg){ showSaved(ICON.touch); controls.append(note('The original picture isn\'t on this device. Choose it again here if you want to change how it\'s cropped.')); return; }
       const draw = () => drawIcon(prev, srcImg, o);
       draw();
       prev.classList.add('draggable');
@@ -5066,7 +5079,7 @@ const SECTION_BUILDERS = {
         smallBtn('Copy', () => { (navigator.clipboard ? navigator.clipboard.writeText(syncCode) : Promise.reject()).then(() => flash('Sync code copied.')).catch(() => flash('Couldn\'t copy, select it by hand.', 'warn')); })
       ])),
       row('Switch device or code', 'Connect this device to a different code or create a new one.', smallBtn('Open device sync', () => document.getElementById('changeSyncBtn').click())),
-      row('Export a backup', 'Downloads your whole log and settings as a file. Your own background and sound files aren\'t included.', smallBtn('Export', exportBackup)),
+      row('Export a backup', 'Downloads your whole log and settings as a file (your app icon too). Your own background and sound files aren\'t included.', smallBtn('Export', exportBackup)),
       row('Import a backup', 'Restore from a file you exported earlier.', el('span', {}, [smallBtn('Choose file', () => imp.click()), imp])),
       impBox,
       el('div', {class: 'set-danger'}, [
@@ -5268,14 +5281,71 @@ async function loadIconSource(){
   } catch(e){}
   return iconSrc;
 }
+function loadImageUrl(url){ return new Promise(resolve => { const i = new Image(); i.onload = () => resolve(i); i.onerror = () => resolve(null); i.src = url; }); }
+function setApp(fields){
+  if(!state) return;
+  if(!isPlainObject(state.settings)) state.settings = {};
+  state.settings.app = Object.assign({}, isPlainObject(state.settings.app) ? state.settings.app : {}, cloneJSON(fields));
+  refreshSettings();
+  queueSave();
+}
+// Runs every time the settings are (re)read: keeps this device's icon and name in step with the log.
+let iconBuildFor = 0;
+function syncAppIcon(){
+  const a = SET.app || {};
+  const name = String(a.name || '').trim().slice(0, 30);
+  let changed = false;
+  if((ICON.name || '') !== name){ ICON.name = name; changed = true; }
+  if(a.icon && a.v){
+    if(ICON.v !== a.v && iconBuildFor !== a.v){
+      // set on another device (or in another browser on this one): make the PNGs here
+      const v = a.v;
+      iconBuildFor = v;
+      loadImageUrl(a.icon).then(img => {
+        if(iconBuildFor === v) iconBuildFor = 0;
+        if(!img || !SET.app || SET.app.v !== v) return;
+        const c = document.createElement('canvas'); c.width = c.height = 180;
+        const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, 180, 180);
+        ICON.touch = c.toDataURL('image/png'); ICON.fav = downTo(c, 64).toDataURL('image/png'); ICON.v = v;
+        saveIconCache();
+        applyIcon();
+        if(currentTab === 'settings') rebuildSection('appicon');
+      });
+    }
+  } else if(ICON.v){
+    // it was removed elsewhere (a cache without v is an old device-only icon waiting to be moved over)
+    delete ICON.touch; delete ICON.fav; delete ICON.v;
+    changed = true;
+  }
+  if(changed){ saveIconCache(); applyIcon(); }
+}
+// Version 2.0 kept the icon and name on the device only: move them into the log once.
+function migrateDeviceIcon(){
+  if(DEV.appName){
+    const old = String(DEV.appName).trim().slice(0, 30);
+    DEV.appName = ''; saveDev();
+    if(old && !SET.app.name) setApp({name: old});
+  }
+  if(ICON.touch && !ICON.v && !SET.app.icon){
+    loadImageUrl(ICON.touch).then(img => {
+      if(!img || !state || SET.app.icon || ICON.v) return;
+      const c = document.createElement('canvas'); c.width = c.height = 180;
+      c.getContext('2d').drawImage(img, 0, 0, 180, 180);
+      const v = Date.now();
+      ICON.v = v; saveIconCache();
+      setApp({icon: c.toDataURL('image/jpeg', .88), v, opts: ICON.opts || null});
+      delete ICON.opts; saveIconCache();
+    });
+  }
+}
 function commitIcon(o){
-  if(!iconSrc) return false;
+  if(!iconSrc || !state) return false;
   const big = document.createElement('canvas'); big.width = big.height = 720;
   drawIcon(big, iconSrc, o);
-  const next = {touch: downTo(big, 180).toDataURL('image/png'), fav: downTo(big, 64).toDataURL('image/png'), opts: {...o}};
-  try{ localStorage.setItem(ICON_KEY, JSON.stringify(next)); }
-  catch(e){ flash('There isn\'t enough space on this device for that icon.', 'warn'); return false; }
-  ICON = next;
+  const c180 = downTo(big, 180), v = Date.now();
+  ICON.touch = c180.toDataURL('image/png'); ICON.fav = downTo(big, 64).toDataURL('image/png'); ICON.v = v;
+  saveIconCache();
+  setApp({icon: c180.toDataURL('image/jpeg', .88), v, opts: {...o}});   // the synced copy
   applyIcon();
   document.querySelectorAll('.icon-tab img').forEach(i => { i.src = ICON.fav; });
   return true;
@@ -5290,16 +5360,55 @@ async function setIconFile(f){
   }
   iconSrc = shrinkSource(img);
   try{ await bgPut('appicon-src', f); } catch(e){ /* only needed for re-cropping later */ }
-  if(commitIcon({fit: 'cover', zoom: 1, x: 0, y: 0, bg: (ICON && ICON.opts && ICON.opts.bg) || '#0e2032'})) flash('New icon set. Drag it in the preview to move it.');
+  if(commitIcon({fit: 'cover', zoom: 1, x: 0, y: 0, bg: (SET.app.opts && SET.app.opts.bg) || '#0e2032'})) flash('New icon set. Drag it in the preview to move it.');
   rebuildSection('appicon');
 }
 async function resetIcon(){
-  ICON = null; iconSrc = null;
-  try{ localStorage.removeItem(ICON_KEY); } catch(e){}
+  iconSrc = null;
+  delete ICON.touch; delete ICON.fav; delete ICON.v;
+  saveIconCache();
+  setApp({icon: '', v: 0, opts: null});
   try{ await bgDel('appicon-src'); } catch(e){}
   applyIcon();
   flash('Back to the default icon.');
   rebuildSection('appicon');
+}
+// A home screen icon is a snapshot: phones and tablets read the icon and name once,
+// when the app is added, and the added app keeps its own storage apart from the browser.
+function isStandalone(){ return navigator.standalone === true || !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
+function homeScreenHelp(){
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const browser = ios ? 'Safari' : 'your browser';
+  const addStep = ios ? 'Tap the Share button (the square with the arrow), then "Add to Home Screen".' : 'On an iPad or iPhone: Share button, then "Add to Home Screen". On Android: browser menu, then "Add to Home screen".';
+  const url = location.origin + location.pathname;
+  const copy = smallBtn('Copy the app link', () => { (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => flash('Link copied. Paste it into ' + browser + '.')).catch(() => flash(url, 'warn')); });
+  const box = el('div', {class: 'icon-help' + (isStandalone() ? ' warn' : '')});
+  if(isStandalone()){
+    box.append(
+      el('b', {text: 'This home screen icon can\'t change by itself'}),
+      el('p', {text: 'You opened the app from your home screen. Phones and tablets only read the icon and name at the moment you add the app, so the one you tapped keeps its old look. To get the new one:'}),
+      el('ol', {}, [
+        el('li', {text: 'Look up your sync code under Sync & data below. You\'ll need it twice.'}),
+        el('li', {text: 'Open the app link in ' + browser + ' (not from the home screen) and enter your sync code. Your icon and name are saved in your log, so they show up there by themselves.'}),
+        el('li', {text: addStep}),
+        el('li', {text: 'Open the new icon, enter your sync code again, then delete the old icon.'})
+      ]),
+      el('p', {class: 'icon-help-foot', text: 'The new icon is a fresh copy of the app on this device. Your log and synced settings come back with the code, but your own backgrounds, roar sounds and the "this device" settings need to be set up again in it.'}),
+      copy
+    );
+  } else {
+    box.append(
+      el('b', {text: 'Getting it onto your home screen'}),
+      el('p', {text: 'The browser tab changes straight away. A home screen icon is different: phones and tablets only read the icon and name at the moment you add the app, and never update them afterwards.'}),
+      el('ol', {}, [
+        el('li', {text: 'Open this page in ' + browser + ' on that device and check that your icon and name show up here.'}),
+        el('li', {text: addStep}),
+        el('li', {text: 'If an older icon is already on the home screen, open the new one, enter your sync code, then delete the old one.'})
+      ]),
+      el('p', {class: 'icon-help-foot', text: 'An app on the home screen keeps its own storage, apart from the browser. Your log and synced settings come back with your sync code, but your own backgrounds, roar sounds and the "this device" settings have to be set up again in the new one.'})
+    );
+  }
+  return box;
 }
 
 // ----- roar sounds -----
